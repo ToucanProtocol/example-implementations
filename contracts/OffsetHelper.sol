@@ -7,8 +7,7 @@ import "./CO2KEN_contracts/ToucanCarbonOffsets.sol";
 import "./CO2KEN_contracts/pools/BaseCarbonTonne.sol";
 import "./CO2KEN_contracts/pools/NCT.sol";
 import "./OffsetHelperStorage.sol";
-import "./sushi_contracts/uniswapv2/UniswapV2Router02.sol";
-import "./sushi_contracts/uniswapv2/interfaces/IUniswapV2Router02.sol";
+import "./uniswapv2/IUniswapV2Router02.sol";
 
 // TODO making it non-custodial adds a lot of extra gas fees
 contract OffsetHelper is OffsetHelperStorage {
@@ -60,6 +59,9 @@ contract OffsetHelper is OffsetHelperStorage {
         );
 
         // TODO use Sushi to swap tokens
+        address[] memory path = new address[](2);
+        path[0] = eligibleTokenAddresses["WETH"];
+        path[1] = eligibleTokenAddresses["NCT"];
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
         uint256[] memory amountsOut = routerSushi.swapExactTokensForTokens(
             _amount,

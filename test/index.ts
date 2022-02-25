@@ -57,6 +57,9 @@ describe("Offset Helper", function () {
   describe("swap()", function () {
     it("Should swap 0.1 USDC for 0.1 BCT", async function () {
       // TODO implement test
+      await (
+        await offsetHelper.swap("WETH", "NCT", ethers.utils.parseEther("0.1"))
+      ).wait();
     });
   });
 
