@@ -7,6 +7,8 @@ import "./CO2KEN_contracts/ToucanCarbonOffsets.sol";
 import "./CO2KEN_contracts/pools/BaseCarbonTonne.sol";
 import "./CO2KEN_contracts/pools/NCT.sol";
 import "./OffsetHelperStorage.sol";
+import "./sushi_contracts/uniswapv2/UniswapV2Router02.sol";
+import "./sushi_contracts/uniswapv2/interfaces/IUniswapV2Router02.sol";
 
 // TODO making it non-custodial adds a lot of extra gas fees
 contract OffsetHelper is OffsetHelperStorage {
@@ -34,7 +36,7 @@ contract OffsetHelper is OffsetHelperStorage {
         return "false";
     }
 
-    // @description uses SushiSwap to exchange tokens (right in the user's wallet, meaning non-custodial)
+    // @description uses SushiSwap to exchange tokens
     // @param _fromToken token to deposit and swap
     // @param _toToken token to receive after swap
     // @param _amount amount to swap
@@ -58,6 +60,14 @@ contract OffsetHelper is OffsetHelperStorage {
         );
 
         // TODO use Sushi to swap tokens
+        IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
+        uint256[] memory amountsOut = routerSushi.swapExactTokensForTokens(
+            _amount,
+            _amount,
+            path,
+            msg.sender,
+            block.timestamp
+        );
     }
 
     // @description redeems an amount of NCT / BCT for TCO2

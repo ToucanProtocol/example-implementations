@@ -12,8 +12,8 @@ contract OffsetHelperStorage is OwnableUpgradeable {
     mapping(string => address) public eligibleTokenAddresses;
     address public contractRegistryAddress =
         0x6739D490670B2710dc7E79bB12E455DE33EE1cb6;
-    address private constant UNISWAP_V2_ROUTER =
-        0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
+    address public sushiRouterAddress =
+        0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506;
 
     constructor() {
         eligibleTokenAddresses[
