@@ -16,7 +16,7 @@ const addresses: any = {
   myAddress: "0x721F6f7A29b99CbdE1F18C4AA7D7AEb31eb2923B",
   tco2Address: "0xa5831eb637dff307395b5183c86B04c69C518681",
   bctAddress: "0xf2438A14f668b1bbA53408346288f3d7C71c10a1",
-  nctAddress: "0x7beCBA11618Ca63Ead5605DE235f6dD3b25c530E",
+  nctAddress: "0x450471CC47FCB7A523DE90b64b98e47b66e27e49",
   usdcAddress: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
   wethAddress: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
   wmaticAddress: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
@@ -66,12 +66,7 @@ describe("Offset Helper", function () {
       nct = new ethers.Contract(addresses.nctAddress, nctAbi.abi, owner);
 
       // TODO there is an issue with the nct.getScoredTCO2s method
-      console.log(
-        "scored tco2s",
-        await nct.getScoredTCO2s({
-          gasLimit: ethers.utils.parseEther("1000000"),
-        })
-      );
+      console.log("scored tco2s", await nct.getScoredTCO2s());
 
       return;
 

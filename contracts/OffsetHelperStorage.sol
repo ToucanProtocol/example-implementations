@@ -12,6 +12,8 @@ contract OffsetHelperStorage is OwnableUpgradeable {
     mapping(string => address) public eligibleTokenAddresses;
     address public contractRegistryAddress =
         0x6739D490670B2710dc7E79bB12E455DE33EE1cb6;
+    address private constant UNISWAP_V2_ROUTER =
+        0x7a250d5630B4cF539739dF2C5dAcb4c659F2488D;
 
     constructor() {
         eligibleTokenAddresses[
@@ -20,7 +22,7 @@ contract OffsetHelperStorage is OwnableUpgradeable {
 
         eligibleTokenAddresses[
             "NCT"
-        ] = 0x7beCBA11618Ca63Ead5605DE235f6dD3b25c530E;
+        ] = 0x450471CC47FCB7A523DE90b64b98e47b66e27e49;
 
         eligibleTokenAddresses[
             "USDC"
