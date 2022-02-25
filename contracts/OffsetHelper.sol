@@ -8,6 +8,7 @@ import "./CO2KEN_contracts/pools/BaseCarbonTonne.sol";
 import "./CO2KEN_contracts/pools/NCT.sol";
 import "./OffsetHelperStorage.sol";
 
+// TODO making it non-custodial adds a lot of extra gas fees
 contract OffsetHelper is OffsetHelperStorage {
     using SafeERC20 for IERC20;
 
@@ -92,15 +93,41 @@ contract OffsetHelper is OffsetHelperStorage {
             keccak256(abi.encodePacked(_fromToken)) ==
             keccak256(abi.encodePacked("NCT"))
         ) {
+            NatureCarbonTonne NCTImplementation = NatureCarbonTonne(
+                eligibleTokenAddresses["NCT"]
+            );
+
             IERC20(eligibleTokenAddresses["NCT"]).safeTransferFrom(
                 msg.sender,
                 address(this),
                 _amount
             );
-            NatureCarbonTonne(eligibleTokenAddresses["NCT"]).redeemAuto(
-                _amount
-            );
-            IERC20(eligibleTokenAddresses["NCT"]).transfer(msg.sender, _amount);
+            NCTImplementation.redeemAuto(_amount);
+
+            // what I'm trying to do here is loop over all possible TCO2s that I could have received from redeeming
+            // and transfer to the user until the whole amount has been transferred
+            uint256 remainingAmount = (_amount / 10) * 9;
+            uint256 i = 0;
+            // TODO issue when getting scored TCO2s, maybe because there isn't a scoredTCO2s array on mumbai?
+            address[] memory scoredTCO2s = NCTImplementation.getScoredTCO2s();
+            uint256 scoredTCO2Len = scoredTCO2s.length;
+            while (remainingAmount > 0 && i < scoredTCO2Len) {
+                address tco2 = scoredTCO2s[i];
+                uint256 balance = ToucanCarbonOffsets(tco2).balanceOf(
+                    address(this)
+                );
+                uint256 amountToTransfer = remainingAmount > balance
+                    ? balance
+                    : remainingAmount;
+                IERC20(tco2).transfer(msg.sender, amountToTransfer);
+                remainingAmount -= amountToTransfer;
+                i += 1;
+            }
+
+            // IERC20(eligibleTokenAddresses["TCO2"]).transfer(
+            //     msg.sender,
+            //     (_amount / 10) * 9 // to reflect the 10% redeem fee
+            // );
         }
     }
 

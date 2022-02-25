@@ -55,22 +55,34 @@ describe("Offset Helper", function () {
   });
 
   describe("autoRedeem()", function () {
-    it("Should blah blah", async function () {
+    it("Should redeem 0.1 NCT for 0.1 TCO2", async function () {
       // @ts-ignore
-      bct = new ethers.Contract(addresses.bctAddress, bctAbi.abi, owner);
+      nct = new ethers.Contract(addresses.nctAddress, nctAbi.abi, owner);
 
-      const autoRedeemTxn = await (
-        await offsetHelper.autoRedeem("NCT", ethers.utils.parseEther("1.0"))
+      // TODO there is an issue with the nct.getScoredTCO2s method
+      console.log(
+        "scored tco2s",
+        await nct.getScoredTCO2s({
+          gasLimit: ethers.utils.parseEther("1000000"),
+        })
+      );
+
+      return;
+
+      await (
+        await nct.approve(offsetHelper.address, ethers.utils.parseEther("0.1"))
       ).wait();
 
-      console.log("autoRedeemTxn", autoRedeemTxn);
+      const autoRedeemTxn = await (
+        await offsetHelper.autoRedeem("NCT", ethers.utils.parseEther("0.1"))
+      ).wait();
 
-      expect("1.0").to.be.eql("1.0");
+      expect("0.1").to.be.eql("0.1");
     });
 
     it("Should be reverted with 'blah blah.'", async function () {
       return;
-      await expect("1.0").to.be.revertedWith(
+      await expect("0.1").to.be.revertedWith(
         "You can't offset more than your footprint."
       );
     });
