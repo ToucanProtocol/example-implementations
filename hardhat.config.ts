@@ -23,7 +23,7 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
 // Go to https://hardhat.org/config/ to learn more
 
 const config: HardhatUserConfig = {
-  defaultNetwork: "polygonFork",
+  defaultNetwork: "hardhat",
   solidity: {
     version: "0.8.4",
     settings: {
@@ -48,15 +48,9 @@ const config: HardhatUserConfig = {
           ? [process.env.MUMBAI_PRIVATE_KEY]
           : [],
     },
-    polygonFork: {
+    hardhat: {
       forking: {
         url: process.env.POLYGON_URL || "",
-        blockNumber: 25276448,
-      },
-    },
-    mumbaiFork: {
-      forking: {
-        url: process.env.MUMBAI_URL || "",
         blockNumber: 25276448,
       },
     },

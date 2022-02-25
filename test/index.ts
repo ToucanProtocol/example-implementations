@@ -33,8 +33,7 @@ describe("Offset Helper", function () {
 
   beforeEach(async function () {
     /**
-     * if we are forking Mumbai (which I chose to do for performance, so I can test & iterate faster)
-     * we impersonate my Mumbai account (I have TCO2, BCT & MATIC on it at the blockNumber I chose)
+     * if we are forking we impersonate my  account
      */
     if (network.name === "hardhat") {
       await network.provider.request({
