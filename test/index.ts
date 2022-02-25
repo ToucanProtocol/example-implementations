@@ -65,6 +65,8 @@ describe("Offset Helper", function () {
       // @ts-ignore
       nct = new ethers.Contract(addresses.nctAddress, nctAbi.abi, owner);
 
+      const initialBalance = await nct.balanceOf(addresses.myAddress);
+
       await (
         await nct.approve(offsetHelper.address, ethers.utils.parseEther("0.1"))
       ).wait();
@@ -73,7 +75,9 @@ describe("Offset Helper", function () {
         await offsetHelper.autoRedeem("NCT", ethers.utils.parseEther("0.1"))
       ).wait();
 
-      expect("0.1").to.be.eql("0.1");
+      expect(await nct.balanceOf(addresses.myAddress)).to.be.eql(
+        initialBalance.sub(ethers.utils.parseEther("0.1"))
+      );
     });
 
     it("Should be reverted with 'blah blah.'", async function () {
