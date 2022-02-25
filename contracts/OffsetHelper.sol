@@ -63,6 +63,7 @@ contract OffsetHelper is OffsetHelperStorage {
     // @description redeems an amount of NCT / BCT for TCO2
     // @param _fromToken "NCT" | "BCT"
     // @param _amount amount of NCT / BCT to redeem
+    // @notice needs to be approved on the client side
     function autoRedeem(string memory _fromToken, uint256 _amount) public {
         require(
             keccak256(abi.encodePacked(_fromToken)) ==
@@ -71,9 +72,6 @@ contract OffsetHelper is OffsetHelperStorage {
                 keccak256(abi.encodePacked("NCT")),
             "Can't redeem this token."
         );
-
-        // take BCT / NCT from user, redeem it for TCO2 & send back to user
-        // needs to be approved
 
         /// I'm keeping BCT commented out for now until they deploy redeemAuto() for it too
         // if (
@@ -93,19 +91,24 @@ contract OffsetHelper is OffsetHelperStorage {
             keccak256(abi.encodePacked(_fromToken)) ==
             keccak256(abi.encodePacked("NCT"))
         ) {
+            // store the contract in a variable for readability since it will be used a few times
             NatureCarbonTonne NCTImplementation = NatureCarbonTonne(
                 eligibleTokenAddresses["NCT"]
             );
 
+            // do a safe transfer from user to this contract;
             IERC20(eligibleTokenAddresses["NCT"]).safeTransferFrom(
                 msg.sender,
                 address(this),
                 _amount
             );
+
+            // auto redeem NCT for TCO2; will transfer to this contract automatically picked TCO2
             NCTImplementation.redeemAuto(_amount);
 
-            // what I'm trying to do here is loop over all possible TCO2s that I could have received from redeeming
-            // and transfer to the user until the whole amount has been transferred
+            // I'm attempting to loop over all possible TCO2s that I could have received from redeeming
+            // and transfer of each to the user until the whole amount (minus fees) has been transferred
+            // TODO may need to calculate fees differently
             uint256 remainingAmount = (_amount / 10) * 9;
             uint256 i = 0;
             // TODO issue when getting scored TCO2s, maybe because there isn't a scoredTCO2s array on mumbai?
@@ -123,11 +126,6 @@ contract OffsetHelper is OffsetHelperStorage {
                 remainingAmount -= amountToTransfer;
                 i += 1;
             }
-
-            // IERC20(eligibleTokenAddresses["TCO2"]).transfer(
-            //     msg.sender,
-            //     (_amount / 10) * 9 // to reflect the 10% redeem fee
-            // );
         }
     }
 
