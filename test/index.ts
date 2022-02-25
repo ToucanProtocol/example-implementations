@@ -54,6 +54,12 @@ describe("Offset Helper", function () {
     offsetHelper = await offsetHelperFactory.deploy();
   });
 
+  describe("swap()", function () {
+    it("Should swap 0.1 USDC for 0.1 BCT", async function () {
+      // TODO implement test
+    });
+  });
+
   describe("autoRedeem()", function () {
     it("Should redeem 0.1 NCT for 0.1 TCO2", async function () {
       // @ts-ignore
