@@ -13,6 +13,7 @@ import {
 } from "../typechain";
 import { Pool } from "@uniswap/v3-sdk";
 import { abi as QuoterABI } from "@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json";
+import { BigNumber, BigNumberish } from "ethers";
 
 const addresses: any = {
   myAddress: "0x721F6f7A29b99CbdE1F18C4AA7D7AEb31eb2923B",
@@ -58,9 +59,43 @@ describe("Offset Helper", function () {
     offsetHelper = await offsetHelperFactory.deploy();
   });
 
+  describe("use fork to add NCT", () => {
+    it("Should change balance of NCT from 0.0 to 1.0", async () => {
+      // TODO how do I use the fork to add ERC20 tokens to my wallet so I can actually test this stuff
+      const nctSlot = 2;
+      const nct = new ethers.Contract(
+        addresses.nctAddress,
+        nctAbi.abi,
+        ethers.provider
+      );
+      const locallyManipulatedBalance = ethers.utils.parseEther("1.0");
+
+      const [user] = await ethers.getSigners();
+      const userAddress = await user.getAddress();
+
+      // Get storage slot index
+      const index = ethers.utils.solidityKeccak256(
+        ["uint256", "uint256"],
+        [userAddress, nctSlot] // key, slot
+      );
+
+      // Manipulate local balance (needs to be bytes32 string)
+      await setStorageAt(
+        addresses.nctAddress,
+        index.toString(),
+        toBytes32(locallyManipulatedBalance).toString()
+      );
+
+      const myNctBalance = await nct.balanceOf(addresses.myAddress);
+
+      expect(ethers.utils.formatEther(myNctBalance)).to.be.eql("1.0");
+    });
+  });
+
   describe("swap()", function () {
-    it("Should swap 0.1 USDC for 0.1 BCT", async function () {
-      // I don't have any USDC, how can I get some in the fork?
+    it("Should swap 0.1 USDC for 0.1 NCT", async function () {
+      // TODO I don't have any USDC, how can I get some in the fork?
+
       const swapTxn = await (
         await offsetHelper.swap(
           addresses.wethAddress,
@@ -74,7 +109,7 @@ describe("Offset Helper", function () {
 
   describe("autoRedeem()", function () {
     it("Should redeem 0.1 NCT for 0.1 TCO2", async function () {
-      // I don't have any NCT, how can I get some in the fork?
+      // TODO I don't have any NCT, how can I get some in the fork?
 
       // @ts-ignore
       nct = new ethers.Contract(addresses.nctAddress, nctAbi.abi, owner);
@@ -102,3 +137,14 @@ describe("Offset Helper", function () {
     });
   });
 });
+
+// UTILS
+
+const toBytes32 = (bn: BigNumber) => {
+  return ethers.utils.hexlify(ethers.utils.zeroPad(bn.toHexString(), 32));
+};
+
+const setStorageAt = async (address: string, index: string, value: string) => {
+  await ethers.provider.send("hardhat_setStorageAt", [address, index, value]);
+  await ethers.provider.send("evm_mine", []); // Just mines to the next block
+};
