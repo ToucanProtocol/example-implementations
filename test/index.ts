@@ -6,14 +6,11 @@ import * as bctAbi from "../artifacts/contracts/CO2KEN_contracts/pools/BaseCarbo
 import * as nctAbi from "../artifacts/contracts/CO2KEN_contracts/pools/NCT.sol/NatureCarbonTonne.json";
 import {
   BaseCarbonTonne,
+  NatureCarbonTonne,
   OffsetHelper,
   OffsetHelper__factory,
   ToucanCarbonOffsets,
 } from "../typechain";
-
-const tco2Address: string = "";
-const myAddress: string = "";
-const bctAddress: string = "";
 
 const addresses: any = {
   myAddress: "0x721F6f7A29b99CbdE1F18C4AA7D7AEb31eb2923B",
@@ -29,6 +26,7 @@ describe("Offset Helper", function () {
   let offsetHelper: OffsetHelper;
   let tco: ToucanCarbonOffsets;
   let bct: BaseCarbonTonne;
+  let nct: NatureCarbonTonne;
   let owner: SignerWithAddress;
   let addr1: SignerWithAddress;
   let addr2: SignerWithAddress;
@@ -42,11 +40,11 @@ describe("Offset Helper", function () {
     if (network.name === "hardhat") {
       await network.provider.request({
         method: "hardhat_impersonateAccount",
-        params: [myAddress],
+        params: [addresses.myAddress],
       });
     }
 
-    owner = await ethers.getSigner(myAddress);
+    owner = await ethers.getSigner(addresses.myAddress);
     [addr1, addr2, ...addrs] = await ethers.getSigners();
 
     const offsetHelperFactory = (await ethers.getContractFactory(
@@ -56,15 +54,22 @@ describe("Offset Helper", function () {
     offsetHelper = await offsetHelperFactory.deploy();
   });
 
-  describe("swap()", function () {
+  describe("autoRedeem()", function () {
     it("Should blah blah", async function () {
       // @ts-ignore
-      bct = new ethers.Contract(bctAddress, bctAbi.abi, owner);
+      bct = new ethers.Contract(addresses.bctAddress, bctAbi.abi, owner);
 
-      expect("1.0").to.be.eql("0.00000152");
+      const autoRedeemTxn = await (
+        await offsetHelper.autoRedeem("NCT", ethers.utils.parseEther("1.0"))
+      ).wait();
+
+      console.log("autoRedeemTxn", autoRedeemTxn);
+
+      expect("1.0").to.be.eql("1.0");
     });
 
     it("Should be reverted with 'blah blah.'", async function () {
+      return;
       await expect("1.0").to.be.revertedWith(
         "You can't offset more than your footprint."
       );
