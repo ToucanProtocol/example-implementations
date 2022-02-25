@@ -11,6 +11,8 @@ import {
   OffsetHelper__factory,
   ToucanCarbonOffsets,
 } from "../typechain";
+import { Pool } from "@uniswap/v3-sdk";
+import { abi as QuoterABI } from "@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json";
 
 const addresses: any = {
   myAddress: "0x721F6f7A29b99CbdE1F18C4AA7D7AEb31eb2923B",
@@ -33,13 +35,17 @@ describe("Offset Helper", function () {
 
   beforeEach(async function () {
     /**
-     * if we are forking we impersonate my  account
+     * if we are forking we impersonate my account and give me some wei
      */
     if (network.name === "hardhat") {
       await network.provider.request({
         method: "hardhat_impersonateAccount",
         params: [addresses.myAddress],
       });
+      await network.provider.send("hardhat_setBalance", [
+        addresses.myAddress,
+        ethers.utils.parseEther("2.0").toHexString(), // for some reason it only works with small amounts
+      ]);
     }
 
     owner = await ethers.getSigner(addresses.myAddress);
@@ -54,19 +60,22 @@ describe("Offset Helper", function () {
 
   describe("swap()", function () {
     it("Should swap 0.1 USDC for 0.1 BCT", async function () {
-      // TODO implement test
-      await (
+      // I don't have any USDC, how can I get some in the fork?
+      const swapTxn = await (
         await offsetHelper.swap(
           addresses.wethAddress,
           addresses.nctAddress,
           ethers.utils.parseEther("0.1")
         )
       ).wait();
+      console.log("swap Txn", swapTxn);
     });
   });
 
   describe("autoRedeem()", function () {
     it("Should redeem 0.1 NCT for 0.1 TCO2", async function () {
+      // I don't have any NCT, how can I get some in the fork?
+
       // @ts-ignore
       nct = new ethers.Contract(addresses.nctAddress, nctAbi.abi, owner);
 
