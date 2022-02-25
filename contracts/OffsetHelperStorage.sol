@@ -22,7 +22,7 @@ contract OffsetHelperStorage is OwnableUpgradeable {
 
         eligibleTokenAddresses[
             "NCT"
-        ] = 0x450471CC47FCB7A523DE90b64b98e47b66e27e49;
+        ] = 0x7beCBA11618Ca63Ead5605DE235f6dD3b25c530E;
 
         eligibleTokenAddresses[
             "USDC"

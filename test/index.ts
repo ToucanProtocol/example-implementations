@@ -16,7 +16,7 @@ const addresses: any = {
   myAddress: "0x721F6f7A29b99CbdE1F18C4AA7D7AEb31eb2923B",
   tco2Address: "0xa5831eb637dff307395b5183c86B04c69C518681",
   bctAddress: "0xf2438A14f668b1bbA53408346288f3d7C71c10a1",
-  nctAddress: "0x450471CC47FCB7A523DE90b64b98e47b66e27e49",
+  nctAddress: "0x7beCBA11618Ca63Ead5605DE235f6dD3b25c530E",
   usdcAddress: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
   wethAddress: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
   wmaticAddress: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
@@ -64,9 +64,6 @@ describe("Offset Helper", function () {
     it("Should redeem 0.1 NCT for 0.1 TCO2", async function () {
       // @ts-ignore
       nct = new ethers.Contract(addresses.nctAddress, nctAbi.abi, owner);
-
-      console.log("scored TCO2s", await nct.getScoredTCO2s());
-      return;
 
       await (
         await nct.approve(offsetHelper.address, ethers.utils.parseEther("0.1"))
