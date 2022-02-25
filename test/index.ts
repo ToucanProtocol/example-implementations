@@ -65,9 +65,7 @@ describe("Offset Helper", function () {
       // @ts-ignore
       nct = new ethers.Contract(addresses.nctAddress, nctAbi.abi, owner);
 
-      // TODO there is an issue with the nct.getScoredTCO2s method
-      console.log("scored tco2s", await nct.getScoredTCO2s());
-
+      console.log("scored TCO2s", await nct.getScoredTCO2s());
       return;
 
       await (

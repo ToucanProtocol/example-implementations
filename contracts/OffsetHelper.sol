@@ -111,7 +111,6 @@ contract OffsetHelper is OffsetHelperStorage {
             // TODO may need to calculate fees differently
             uint256 remainingAmount = (_amount / 10) * 9;
             uint256 i = 0;
-            // TODO issue when getting scored TCO2s, maybe because there isn't a scoredTCO2s array on mumbai?
             address[] memory scoredTCO2s = NCTImplementation.getScoredTCO2s();
             uint256 scoredTCO2Len = scoredTCO2s.length;
             while (remainingAmount > 0 && i < scoredTCO2Len) {
