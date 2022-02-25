@@ -59,6 +59,11 @@ describe("Offset Helper", function () {
     offsetHelper = await offsetHelperFactory.deploy();
   });
 
+  /**
+   * TODO I guess one way I could get any ERC20 of my liking is to impersonate an account that
+   * has it in it's balance at the blokcnumber of my choice? Rudimentary, but it fixes my issue.
+   */
+
   describe("use fork to add NCT", () => {
     it("Should change balance of NCT from 0.0 to 1.0", async () => {
       // TODO how do I use the fork to add ERC20 tokens to my wallet so I can actually test this stuff
