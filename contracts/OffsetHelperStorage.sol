@@ -13,7 +13,7 @@ contract OffsetHelperStorage is OwnableUpgradeable {
     address public contractRegistryAddress =
         0x6739D490670B2710dc7E79bB12E455DE33EE1cb6;
     address public sushiRouterAddress =
-        0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506;
+        0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506; // this is polygon, not mumbai
 
     constructor() {
         eligibleTokenAddresses[
@@ -26,15 +26,15 @@ contract OffsetHelperStorage is OwnableUpgradeable {
 
         eligibleTokenAddresses[
             "USDC"
-        ] = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174;
+        ] = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174; // this is polygon, not mumbai
 
         eligibleTokenAddresses[
             "WETH"
-        ] = 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619;
+        ] = 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619; // this is polygon, not mumbai
 
         eligibleTokenAddresses[
             "WMATIC"
-        ] = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;
+        ] = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270; // this is polygon, not mumbai
     }
 
     // @description you can use this to change or add eligible tokens and their addresses if needed

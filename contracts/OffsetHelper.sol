@@ -60,12 +60,12 @@ contract OffsetHelper is OffsetHelperStorage {
 
         // TODO use Sushi to swap tokens
         address[] memory path = new address[](2);
-        path[0] = eligibleTokenAddresses["WETH"];
+        path[0] = eligibleTokenAddresses["USDC"];
         path[1] = eligibleTokenAddresses["NCT"];
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
-        uint256[] memory amountsOut = routerSushi.swapExactTokensForTokens(
+        routerSushi.swapExactTokensForTokens(
             _amount,
-            _amount,
+            (_amount / 10) * 9,
             path,
             msg.sender,
             block.timestamp
