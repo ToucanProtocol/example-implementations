@@ -9,7 +9,7 @@ import "./CO2KEN_contracts/pools/NCT.sol";
 import "./OffsetHelperStorage.sol";
 import "./uniswapv2/IUniswapV2Router02.sol";
 
-// TODO making it non-custodial adds a lot of extra gas fees
+// TODO making it non-custodial adds a lot of extra gas fees, could this be an issue?
 contract OffsetHelper is OffsetHelperStorage {
     using SafeERC20 for IERC20;
 
@@ -69,6 +69,8 @@ contract OffsetHelper is OffsetHelperStorage {
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
         // establish path (TODO in most cases token -> USDC -> NCT/BCT should work, but I need to test it out)
+        // TODO I also need to make the swap method work with ETH/MATIC, not only WETH/WMATIC
+        // TODO how will I decide wether to use BCT / NCT?
         address[] memory path = new address[](3);
         path[0] = _fromToken;
         path[1] = eligibleTokenAddresses["USDC"];
@@ -86,6 +88,7 @@ contract OffsetHelper is OffsetHelperStorage {
 
     // @description redeems an amount of NCT / BCT for TCO2
     // @param _fromToken "NCT" | "BCT"
+    // TODO it may make more sense to use address instead of string for _fromToken
     // @param _amount amount of NCT / BCT to redeem
     // @notice needs to be approved on the client side
     function autoRedeem(string memory _fromToken, uint256 _amount) public {
