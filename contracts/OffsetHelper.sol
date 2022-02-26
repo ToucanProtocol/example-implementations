@@ -59,25 +59,22 @@ contract OffsetHelper is OffsetHelperStorage {
         );
 
         // TODO use Sushi to swap tokens
-        address[] memory path = new address[](2);
+        // TODO change hardcoded values like "WETH"
+        address[] memory path = new address[](3);
         path[0] = eligibleTokenAddresses["WETH"];
-        path[1] = eligibleTokenAddresses["NCT"];
-        uint256 balance = IERC20(eligibleTokenAddresses["WETH"]).balanceOf(
-            msg.sender
-        );
-        console.log("initial user's usdc balance is %s", balance);
-        console.log("we want to transfer %s", _amount);
+        path[1] = eligibleTokenAddresses["USDC"];
+        path[2] = eligibleTokenAddresses["NCT"];
         IERC20(eligibleTokenAddresses["WETH"]).safeTransferFrom(
             msg.sender,
             address(this),
             _amount
         );
-        console.log("after safe transfer user's usdc balance is %s", balance);
-
+        console.log("before approving");
         IERC20(eligibleTokenAddresses["WETH"]).approve(
             sushiRouterAddress,
             _amount
         );
+        console.log("after approving, before router");
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
         routerSushi.swapExactTokensForTokens(
             _amount,
@@ -86,6 +83,7 @@ contract OffsetHelper is OffsetHelperStorage {
             msg.sender,
             block.timestamp
         );
+        console.log("after router");
     }
 
     // @description redeems an amount of NCT / BCT for TCO2
