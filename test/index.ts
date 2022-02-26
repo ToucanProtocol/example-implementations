@@ -143,14 +143,3 @@ describe("Offset Helper", function () {
     });
   });
 });
-
-// UTILS
-
-const toBytes32 = (bn: BigNumber) => {
-  return ethers.utils.hexlify(ethers.utils.zeroPad(bn.toHexString(), 32));
-};
-
-const setStorageAt = async (address: string, index: string, value: string) => {
-  await ethers.provider.send("hardhat_setStorageAt", [address, index, value]);
-  await ethers.provider.send("evm_mine", []); // mines to the next block
-};
