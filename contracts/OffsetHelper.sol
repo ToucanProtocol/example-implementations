@@ -39,18 +39,19 @@ contract OffsetHelper is OffsetHelperStorage {
     // @param _fromToken token to deposit and swap
     // @param _toToken token to receive after swap
     // @param _amount amount to swap
+    // @notice needs to be approved on client side
     function swap(
         address _fromToken,
         address _toToken,
         uint256 _amount
     ) public {
+        // check tokens
         string memory eligibilityOfDepositedToken = checkToken(_fromToken);
         require(
             keccak256(abi.encodePacked(eligibilityOfDepositedToken)) !=
                 keccak256(abi.encodePacked("false")),
             "Can't swap this token"
         );
-
         string memory eligibilityOfSwapedToken = checkToken(_toToken);
         require(
             keccak256(abi.encodePacked(eligibilityOfSwapedToken)) !=
@@ -58,24 +59,22 @@ contract OffsetHelper is OffsetHelperStorage {
             "Can't swap for this token"
         );
 
-        // TODO use Sushi to swap tokens
-        // TODO change hardcoded values like "WETH"
+        // transfer token from user to this
+        IERC20(_fromToken).safeTransferFrom(msg.sender, address(this), _amount);
+
+        // approve sushi
+        IERC20(_fromToken).approve(sushiRouterAddress, _amount);
+
+        // instantiate sushi
+        IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
+
+        // establish path (TODO in most cases token -> USDC -> NCT/BCT should work, but I need to test it out)
         address[] memory path = new address[](3);
-        path[0] = eligibleTokenAddresses["WETH"];
+        path[0] = _fromToken;
         path[1] = eligibleTokenAddresses["USDC"];
         path[2] = eligibleTokenAddresses["NCT"];
-        IERC20(eligibleTokenAddresses["WETH"]).safeTransferFrom(
-            msg.sender,
-            address(this),
-            _amount
-        );
-        console.log("before approving");
-        IERC20(eligibleTokenAddresses["WETH"]).approve(
-            sushiRouterAddress,
-            _amount
-        );
-        console.log("after approving, before router");
-        IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
+
+        // swap
         routerSushi.swapExactTokensForTokens(
             _amount,
             (_amount / 10) * 9,
@@ -83,7 +82,6 @@ contract OffsetHelper is OffsetHelperStorage {
             msg.sender,
             block.timestamp
         );
-        console.log("after router");
     }
 
     // @description redeems an amount of NCT / BCT for TCO2

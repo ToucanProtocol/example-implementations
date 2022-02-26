@@ -62,7 +62,7 @@ describe("Offset Helper", function () {
 
   describe("swap()", function () {
     it("Should swap 0.1 WETH for 0.1 NCT", async function () {
-      // since I have no USDC, I need to impersonate an account that has it
+      // since I have no WETH, I need to impersonate an account that has it
       // I'll also give it some wei just to be safe
       await network.provider.request({
         method: "hardhat_stopImpersonatingAccount",
