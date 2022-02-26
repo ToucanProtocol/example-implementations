@@ -59,79 +59,80 @@ describe("Offset Helper", function () {
     offsetHelper = await offsetHelperFactory.deploy();
   });
 
-  /**
-   * TODO I guess one way I could get any ERC20 of my liking is to impersonate an account that
-   * has it in it's balance at the blokcnumber of my choice? Rudimentary, but it fixes my issue.
-   */
-
-  describe("use fork to add NCT", () => {
-    it("Should change balance of NCT from 0.0 to 1.0", async () => {
-      // TODO how do I use the fork to add ERC20 tokens to my wallet so I can actually test this stuff
-      const nctSlot = 2;
-      const nct = new ethers.Contract(
-        addresses.nctAddress,
-        nctAbi.abi,
-        ethers.provider
-      );
-      const locallyManipulatedBalance = ethers.utils.parseEther("1.0");
-
-      const [user] = await ethers.getSigners();
-      const userAddress = await user.getAddress();
-
-      // Get storage slot index
-      const index = ethers.utils.solidityKeccak256(
-        ["uint256", "uint256"],
-        [userAddress, nctSlot] // key, slot
-      );
-
-      // Manipulate local balance (needs to be bytes32 string)
-      await setStorageAt(
-        addresses.nctAddress,
-        index.toString(),
-        toBytes32(locallyManipulatedBalance).toString()
-      );
-
-      const myNctBalance = await nct.balanceOf(addresses.myAddress);
-
-      expect(ethers.utils.formatEther(myNctBalance)).to.be.eql("1.0");
-    });
-  });
-
   describe("swap()", function () {
     it("Should swap 0.1 USDC for 0.1 NCT", async function () {
-      // TODO I don't have any USDC, how can I get some in the fork?
+      // since I have no USDC, I need to impersonate an account that has it
+      // I'll also give it some wei just to be safe
+      await network.provider.request({
+        method: "hardhat_stopImpersonatingAccount",
+        params: [addresses.myAddress],
+      });
+      await network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: ["0xf977814e90da44bfa03b6295a0616a897441acec"],
+      });
+      await network.provider.send("hardhat_setBalance", [
+        "0xf977814e90da44bfa03b6295a0616a897441acec",
+        ethers.utils.parseEther("2.0").toHexString(),
+      ]);
+      const signer = await ethers.getSigner(
+        "0xf977814e90da44bfa03b6295a0616a897441acec"
+      );
 
-      const swapTxn = await (
-        await offsetHelper.swap(
-          addresses.wethAddress,
-          addresses.nctAddress,
-          ethers.utils.parseEther("0.1")
-        )
+      await (
+        await offsetHelper
+          .connect(signer)
+          .swap(
+            addresses.usdcAddress,
+            addresses.nctAddress,
+            ethers.utils.parseEther("0.1")
+          )
       ).wait();
-      console.log("swap Txn", swapTxn);
     });
   });
 
   describe("autoRedeem()", function () {
     it("Should redeem 0.1 NCT for 0.1 TCO2", async function () {
-      // TODO I don't have any NCT, how can I get some in the fork?
+      // since I have no NCT, I need to impersonate an account that has it
+      // I'll also give it some wei, just to be safe
+      await network.provider.request({
+        method: "hardhat_stopImpersonatingAccount",
+        params: [addresses.myAddress],
+      });
+      await network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: ["0xdab7f2bc9aa986d9759718203c9a76534894e900"],
+      });
+      await network.provider.send("hardhat_setBalance", [
+        "0xdab7f2bc9aa986d9759718203c9a76534894e900",
+        ethers.utils.parseEther("2.0").toHexString(),
+      ]);
+      const signer = await ethers.getSigner(
+        "0xdab7f2bc9aa986d9759718203c9a76534894e900"
+      );
 
       // @ts-ignore
       nct = new ethers.Contract(addresses.nctAddress, nctAbi.abi, owner);
 
-      const initialBalance = await nct.balanceOf(addresses.myAddress);
+      const initialBalance = await nct.balanceOf(
+        "0xdab7f2bc9aa986d9759718203c9a76534894e900"
+      );
 
       await (
-        await nct.approve(offsetHelper.address, ethers.utils.parseEther("0.1"))
+        await nct
+          .connect(signer)
+          .approve(offsetHelper.address, ethers.utils.parseEther("0.1"))
       ).wait();
 
       const autoRedeemTxn = await (
-        await offsetHelper.autoRedeem("NCT", ethers.utils.parseEther("0.1"))
+        await offsetHelper
+          .connect(signer)
+          .autoRedeem("NCT", ethers.utils.parseEther("0.1"))
       ).wait();
 
-      expect(await nct.balanceOf(addresses.myAddress)).to.be.eql(
-        initialBalance.sub(ethers.utils.parseEther("0.1"))
-      );
+      expect(
+        await nct.balanceOf("0xdab7f2bc9aa986d9759718203c9a76534894e900")
+      ).to.be.eql(initialBalance.sub(ethers.utils.parseEther("0.1")));
     });
 
     it("Should be reverted with 'blah blah.'", async function () {
@@ -151,5 +152,5 @@ const toBytes32 = (bn: BigNumber) => {
 
 const setStorageAt = async (address: string, index: string, value: string) => {
   await ethers.provider.send("hardhat_setStorageAt", [address, index, value]);
-  await ethers.provider.send("evm_mine", []); // Just mines to the next block
+  await ethers.provider.send("evm_mine", []); // mines to the next block
 };
