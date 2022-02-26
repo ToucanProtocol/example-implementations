@@ -60,7 +60,7 @@ describe("Offset Helper", function () {
   });
 
   describe("swap()", function () {
-    it("Should swap 0.1 USDC for 0.1 NCT", async function () {
+    it("Should swap 0.1 WETH for 0.1 NCT", async function () {
       // since I have no USDC, I need to impersonate an account that has it
       // I'll also give it some wei just to be safe
       await network.provider.request({
@@ -69,21 +69,21 @@ describe("Offset Helper", function () {
       });
       await network.provider.request({
         method: "hardhat_impersonateAccount",
-        params: ["0xf977814e90da44bfa03b6295a0616a897441acec"],
+        params: ["0xdc9232e2df177d7a12fdff6ecbab114e2231198d"],
       });
       await network.provider.send("hardhat_setBalance", [
-        "0xf977814e90da44bfa03b6295a0616a897441acec",
+        "0xdc9232e2df177d7a12fdff6ecbab114e2231198d",
         ethers.utils.parseEther("2.0").toHexString(),
       ]);
       const signer = await ethers.getSigner(
-        "0xf977814e90da44bfa03b6295a0616a897441acec"
+        "0xdc9232e2df177d7a12fdff6ecbab114e2231198d"
       );
 
       await (
         await offsetHelper
           .connect(signer)
           .swap(
-            addresses.usdcAddress,
+            addresses.wethAddress,
             addresses.nctAddress,
             ethers.utils.parseEther("0.1")
           )

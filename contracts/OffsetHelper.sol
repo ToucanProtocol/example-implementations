@@ -60,8 +60,24 @@ contract OffsetHelper is OffsetHelperStorage {
 
         // TODO use Sushi to swap tokens
         address[] memory path = new address[](2);
-        path[0] = eligibleTokenAddresses["USDC"];
+        path[0] = eligibleTokenAddresses["WETH"];
         path[1] = eligibleTokenAddresses["NCT"];
+        uint256 balance = IERC20(eligibleTokenAddresses["WETH"]).balanceOf(
+            msg.sender
+        );
+        console.log("initial user's usdc balance is %s", balance);
+        console.log("we want to transfer %s", _amount);
+        IERC20(eligibleTokenAddresses["WETH"]).safeTransferFrom(
+            msg.sender,
+            address(this),
+            _amount
+        );
+        console.log("after safe transfer user's usdc balance is %s", balance);
+
+        IERC20(eligibleTokenAddresses["WETH"]).approve(
+            sushiRouterAddress,
+            _amount
+        );
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
         routerSushi.swapExactTokensForTokens(
             _amount,
