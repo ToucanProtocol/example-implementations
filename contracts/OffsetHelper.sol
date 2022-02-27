@@ -59,7 +59,7 @@ contract OffsetHelper is OffsetHelperStorage {
             "Can't swap for this token"
         );
 
-        // transfer token from user to this
+        // transfer token from user to this contract
         IERC20(_fromToken).safeTransferFrom(msg.sender, address(this), _amount);
 
         // approve sushi
@@ -69,17 +69,44 @@ contract OffsetHelper is OffsetHelperStorage {
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
         // establish path (TODO in most cases token -> USDC -> NCT/BCT should work, but I need to test it out)
-        // TODO I also need to make the swap method work with ETH/MATIC, not only WETH/WMATIC
         // TODO how will I decide wether to use BCT / NCT?
         address[] memory path = new address[](3);
         path[0] = _fromToken;
         path[1] = eligibleTokenAddresses["USDC"];
         path[2] = eligibleTokenAddresses["NCT"];
 
-        // swap
+        // swap tokens for tokens
         routerSushi.swapExactTokensForTokens(
             _amount,
             (_amount / 10) * 9,
+            path,
+            msg.sender,
+            block.timestamp
+        );
+    }
+
+    // @description uses SushiSwap to exchange tokens
+    // @param _toToken token to receive after swap
+    // @param _amount amount to swap
+    // @notice needs to be approved on client side
+    function swap(address _toToken) public payable {
+        // TODO need to finish and test this function
+        // check that user sent MATIC
+        require(msg.value > 0, "You need to send some MATIC or a token");
+
+        // instantiate sushi
+        IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
+
+        // sushi router expects path[0] == WETH
+        // TODO how will I decide wether to use BCT / NCT?
+        address[] memory path = new address[](3);
+        path[0] = eligibleTokenAddresses["WETH"];
+        path[1] = eligibleTokenAddresses["USDC"];
+        path[2] = eligibleTokenAddresses["NCT"];
+
+        // swap MATIC for tokens
+        routerSushi.swapExactETHForTokens(
+            (msg.value / 10) * 9,
             path,
             msg.sender,
             block.timestamp
