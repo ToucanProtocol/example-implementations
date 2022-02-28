@@ -96,12 +96,24 @@ describe("Offset Helper", function () {
       await (
         await offsetHelper
           .connect(signer)
-          .swap(
+          ["swap(address,address,uint256)"](
             addresses.wethAddress,
             addresses.nctAddress,
             ethers.utils.parseEther("0.1")
           )
       ).wait();
+
+      // TODO expect
+    });
+
+    it("Should swap 0.1 ETH for 0.1 NCT", async function () {
+      await (
+        await offsetHelper["swap(address)"](addresses.nctAddress, {
+          value: ethers.utils.parseEther("0.1"),
+        })
+      ).wait();
+
+      // TODO expect
     });
   });
 
