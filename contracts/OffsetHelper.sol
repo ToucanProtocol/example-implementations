@@ -118,7 +118,7 @@ contract OffsetHelper is OffsetHelperStorage {
     // TODO it may make more sense to use address instead of string for _fromToken
     // @param _amount amount of NCT / BCT to redeem
     // @notice needs to be approved on the client side
-    function autoRedeem(string memory _fromToken, uint256 _amount) public {
+    function autoRedeem(string calldata _fromToken, uint256 _amount) public {
         require(
             keccak256(abi.encodePacked(_fromToken)) ==
                 keccak256(abi.encodePacked("BCT")) ||
