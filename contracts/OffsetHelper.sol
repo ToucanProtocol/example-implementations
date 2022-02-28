@@ -97,16 +97,16 @@ contract OffsetHelper is OffsetHelperStorage {
         // instantiate sushi
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
-        // sushi router expects path[0] == WETH
+        // sushi router expects path[0] == WMATIC
         // TODO how will I decide wether to use BCT / NCT?
         address[] memory path = new address[](3);
-        path[0] = eligibleTokenAddresses["WETH"];
+        path[0] = eligibleTokenAddresses["WMATIC"];
         path[1] = eligibleTokenAddresses["USDC"];
         path[2] = eligibleTokenAddresses["NCT"];
 
         // swap MATIC for tokens
         routerSushi.swapExactETHForTokens(
-            (msg.value / 10) * 9,
+            msg.value,
             path,
             msg.sender,
             block.timestamp
