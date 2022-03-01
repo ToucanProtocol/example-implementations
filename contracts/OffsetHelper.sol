@@ -110,7 +110,7 @@ contract OffsetHelper is OffsetHelperStorage {
     // @description uses SushiSwap to exchange tokens
     // @param _toToken token to receive after swap
     // @param _amount amount of NCT / BCT to receive after swap
-    // @notice needs to be approved on client side
+    // @notice needs to be provided a message value on client side
     function swap(address _toToken, uint256 _amount) public payable {
         // check eligibility of token to swap for
         require(isSwapable(_toToken), "Can't swap for this token");
