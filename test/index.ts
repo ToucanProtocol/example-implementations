@@ -192,4 +192,10 @@ describe("Offset Helper", function () {
       );
     });
   });
+
+  describe("autoRetire()", function () {
+    it("Should retire 10 TCO2", async function () {
+      // TODO write tests for autoRetire()
+    });
+  });
 });
