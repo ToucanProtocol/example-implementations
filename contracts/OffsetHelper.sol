@@ -176,8 +176,36 @@ contract OffsetHelper is OffsetHelperStorage {
         }
     }
 
-    function autoRetire(uint256 _amount) public {
-        // TODO inspire from NatureCarbonTonne.redeemAuto() to make an autoRetire method
-        // ToucanCarbonOffsets().retireFrom(msg.sender, _amount);
+    // @param _amount the amount of TCO2 to retire
+    // @param _pool the pool that will be used to get scoredTCO2s
+    function autoRetire(uint256 _amount, address _pool) public {
+        require(isRedeemable(_pool), "Can't use this pool.");
+
+        if (_pool == eligibleTokenAddresses["NCT"]) {
+            // store the contract in a variable for readability since it will be used a few times
+            NatureCarbonTonne NCTImplementation = NatureCarbonTonne(_pool);
+
+            // I'm attempting to loop over all possible TCO2s that the user could have
+            // and retire each until the whole amount has been retired / offset
+            uint256 remainingAmount = _amount;
+            uint256 i = 0;
+            address[] memory scoredTCO2s = NCTImplementation.getScoredTCO2s();
+            uint256 scoredTCO2Len = scoredTCO2s.length;
+            while (remainingAmount > 0 && i < scoredTCO2Len) {
+                address tco2 = scoredTCO2s[i];
+                uint256 balance = ToucanCarbonOffsets(tco2).balanceOf(
+                    address(this)
+                );
+                uint256 amountToRetire = remainingAmount > balance
+                    ? balance
+                    : remainingAmount;
+                ToucanCarbonOffsets(tco2).retireFrom(
+                    msg.sender,
+                    amountToRetire
+                );
+                remainingAmount -= amountToRetire;
+                i += 1;
+            }
+        }
     }
 }
