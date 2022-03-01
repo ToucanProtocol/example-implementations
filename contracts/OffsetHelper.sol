@@ -9,29 +9,71 @@ import "./CO2KEN_contracts/pools/NCT.sol";
 import "./OffsetHelperStorage.sol";
 import "./uniswapv2/IUniswapV2Router02.sol";
 
-// TODO making it non-custodial adds a lot of extra gas fees, could this be an issue?
 contract OffsetHelper is OffsetHelperStorage {
     using SafeERC20 for IERC20;
 
-    // checks address and returns token type or 'false' if not eligible
+    // @param _depositedToken the token the user sends (could be USDC, WETH, WMATIC)
+    // @param _carbonToken the redeem token that the user wants to use (could be NCT or BCT)
+    // @param _amountToOffset the amount of TCO2 to offset
+    function autoOffset(
+        address _depositedToken,
+        address _carbonToken,
+        uint256 _amountToOffset
+    ) public {}
+
+    // @param _carbonToken the redeem token that the user wants to use (could be NCT or BCT)
+    // @param _amountToOffset the amount of TCO2 to offset
+    function autoOffset(address _carbonToken, uint256 _amountToOffset)
+        public
+        payable
+    {}
+
+    // @param _depositedToken the redeem token that the user deposited & wants to use (could be NCT or BCT)
+    // @param _amountToOffset the amount of TCO2 to offset
+    function autoOffsetUsingRedeemableToken(
+        address _depositedToken,
+        uint256 _amountToOffset
+    ) public {}
+
+    // @param _depositedToken the tokens that the user deposited & wants to use (could be any TCO2)
+    // @param _amountsDeposited the amounts he has deposited of each TCO2
+    // @param _amountToOffset the amount of TCO2 to offset
+    // TODO might choose that this one is futile, unimportant and not build it
+    function autoOffsetUsingTCO2(
+        address[] calldata _depositedTokens,
+        uint256[] calldata _amountsDeposited,
+        uint256 _amountToOffset
+    ) public {}
+
+    // checks address and returns if can be used at all by contract
     // @param _erc20Address address of token to be checked
-    function checkToken(address _erc20Address)
-        private
-        view
-        returns (string memory)
-    {
+    function isEligible(address _erc20Address) private view returns (bool) {
         bool isToucanContract = IToucanContractRegistry(contractRegistryAddress)
             .checkERC20(_erc20Address);
+        if (isToucanContract) return true;
+        if (_erc20Address == eligibleTokenAddresses["BCT"]) return true;
+        if (_erc20Address == eligibleTokenAddresses["NCT"]) return true;
+        if (_erc20Address == eligibleTokenAddresses["USDC"]) return true;
+        if (_erc20Address == eligibleTokenAddresses["WETH"]) return true;
+        if (_erc20Address == eligibleTokenAddresses["WMATIC"]) return true;
+        return false;
+    }
 
-        if (isToucanContract) return "TCO2";
+    // checks address and returns if can be used in a swap
+    // @param _erc20Address address of token to be checked
+    function isSwapable(address _erc20Address) private view returns (bool) {
+        if (_erc20Address == eligibleTokenAddresses["USDC"]) return true;
+        if (_erc20Address == eligibleTokenAddresses["WETH"]) return true;
+        if (_erc20Address == eligibleTokenAddresses["WMATIC"]) return true;
+        return false;
+    }
 
-        if (_erc20Address == eligibleTokenAddresses["BCT"]) return "BCT";
-        if (_erc20Address == eligibleTokenAddresses["NCT"]) return "NCT";
-        if (_erc20Address == eligibleTokenAddresses["USDC"]) return "USDC";
-        if (_erc20Address == eligibleTokenAddresses["WETH"]) return "WETH";
-        if (_erc20Address == eligibleTokenAddresses["WMATIC"]) return "WMATIC";
-
-        return "false";
+    // checks address and returns if can be used in a redeem
+    // @param _erc20Address address of token to be checked
+    function isRedeemable(address _erc20Address) private view returns (bool) {
+        if (_erc20Address == eligibleTokenAddresses["BCT"]) return true;
+        if (_erc20Address == eligibleTokenAddresses["NCT"]) return true;
+        return false;
     }
 
     // @description uses SushiSwap to exchange tokens
@@ -45,17 +87,9 @@ contract OffsetHelper is OffsetHelperStorage {
         uint256 _amount
     ) public {
         // check tokens
-        string memory eligibilityOfDepositedToken = checkToken(_fromToken);
         require(
-            keccak256(abi.encodePacked(eligibilityOfDepositedToken)) !=
-                keccak256(abi.encodePacked("false")),
+            isSwapable(_fromToken) && isSwapable(_toToken),
             "Can't swap this token"
-        );
-        string memory eligibilityOfSwapedToken = checkToken(_toToken);
-        require(
-            keccak256(abi.encodePacked(eligibilityOfSwapedToken)) !=
-                keccak256(abi.encodePacked("false")),
-            "Can't swap for this token"
         );
 
         // transfer token from user to this contract
@@ -68,7 +102,6 @@ contract OffsetHelper is OffsetHelperStorage {
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
         // establish path (in most cases token -> USDC -> NCT/BCT should work)
-        // TODO how will I decide wether to use BCT / NCT?
         address[] memory path = new address[](3);
         path[0] = _fromToken;
         path[1] = eligibleTokenAddresses["USDC"];
@@ -90,18 +123,12 @@ contract OffsetHelper is OffsetHelperStorage {
     // @notice needs to be approved on client side
     function swap(address _toToken, uint256 _amount) public payable {
         // check eligibility of token to swap for
-        string memory eligibilityOfSwapedToken = checkToken(_toToken);
-        require(
-            keccak256(abi.encodePacked(eligibilityOfSwapedToken)) !=
-                keccak256(abi.encodePacked("false")),
-            "Can't swap for this token"
-        );
+        require(isSwapable(_toToken), "Can't swap for this token");
 
         // instantiate sushi
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
         // sushi router expects path[0] == WMATIC
-        // TODO how will I decide wether to use BCT / NCT?
         address[] memory path = new address[](3);
         path[0] = eligibleTokenAddresses["WMATIC"];
         path[1] = eligibleTokenAddresses["USDC"];
@@ -118,43 +145,21 @@ contract OffsetHelper is OffsetHelperStorage {
 
     // @description redeems an amount of NCT / BCT for TCO2
     // @param _fromToken "NCT" | "BCT"
-    // TODO it may make more sense to use address instead of string for _fromToken
     // @param _amount amount of NCT / BCT to redeem
     // @notice needs to be approved on the client side
-    function autoRedeem(string calldata _fromToken, uint256 _amount) public {
+    function autoRedeem(address _fromToken, uint256 _amount) public {
         require(
-            keccak256(abi.encodePacked(_fromToken)) ==
-                keccak256(abi.encodePacked("BCT")) ||
-                keccak256(abi.encodePacked(_fromToken)) ==
-                keccak256(abi.encodePacked("NCT")),
+            // TODO add BCT once it has redeemAuto()
+            isRedeemable(_fromToken),
             "Can't redeem this token."
         );
 
-        /// I'm keeping BCT commented out for now until they deploy redeemAuto() for it too
-        // if (
-        //     keccak256(abi.encodePacked(_fromToken)) ==
-        //     keccak256(abi.encodePacked("BCT"))
-        // ) {
-        //     IERC20(eligibleTokenAddresses["BCT"]).safeTransferFrom(
-        //         msg.sender,
-        //         address(this),
-        //         _amount
-        //     );
-        //     BaseCarbonTonne(eligibleTokenAddresses["BCT"]).redeemAuto(_amount);
-        //     IERC20(eligibleTokenAddresses["BCT"]).transfer(msg.sender, _amount);
-        // } else
-
-        if (
-            keccak256(abi.encodePacked(_fromToken)) ==
-            keccak256(abi.encodePacked("NCT"))
-        ) {
+        if (_fromToken == eligibleTokenAddresses["NCT"]) {
             // store the contract in a variable for readability since it will be used a few times
-            NatureCarbonTonne NCTImplementation = NatureCarbonTonne(
-                eligibleTokenAddresses["NCT"]
-            );
+            NatureCarbonTonne NCTImplementation = NatureCarbonTonne(_fromToken);
 
             // do a safe transfer from user to this contract;
-            IERC20(eligibleTokenAddresses["NCT"]).safeTransferFrom(
+            IERC20(_fromToken).safeTransferFrom(
                 msg.sender,
                 address(this),
                 _amount
