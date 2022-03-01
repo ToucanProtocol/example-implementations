@@ -46,7 +46,7 @@ describe("Offset Helper", function () {
       });
       await network.provider.send("hardhat_setBalance", [
         addresses.myAddress,
-        ethers.utils.parseEther("2.0").toHexString(), // for some reason it only works with small amounts
+        ethers.utils.parseEther("8.0").toHexString(), // for some reason it only works with small amounts
       ]);
     }
 
@@ -124,7 +124,10 @@ describe("Offset Helper", function () {
       await (
         await offsetHelper["swap(address,uint256)"](
           addresses.nctAddress,
-          ethers.utils.parseEther("1.0")
+          ethers.utils.parseEther("1.0"),
+          {
+            value: ethers.utils.parseEther("4.0"),
+          }
         )
       ).wait();
 
