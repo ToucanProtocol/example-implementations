@@ -138,11 +138,7 @@ contract OffsetHelper is OffsetHelperStorage {
     // @param _amount amount of NCT / BCT to redeem
     // @notice needs to be approved on the client side
     function autoRedeem(address _fromToken, uint256 _amount) public {
-        require(
-            // TODO add BCT once it has redeemAuto()
-            isRedeemable(_fromToken),
-            "Can't redeem this token."
-        );
+        require(isRedeemable(_fromToken), "Can't redeem this token.");
 
         if (_fromToken == eligibleTokenAddresses["NCT"]) {
             // store the contract in a variable for readability since it will be used a few times
