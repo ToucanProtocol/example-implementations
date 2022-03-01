@@ -78,7 +78,7 @@ contract OffsetHelper is OffsetHelperStorage {
     ) public {
         // check tokens
         require(
-            isSwapable(_fromToken) && isSwapable(_toToken),
+            isSwapable(_fromToken) && isRedeemable(_toToken),
             "Can't swap this token"
         );
 
@@ -113,7 +113,7 @@ contract OffsetHelper is OffsetHelperStorage {
     // @notice needs to be provided a message value on client side
     function swap(address _toToken, uint256 _amount) public payable {
         // check eligibility of token to swap for
-        require(isSwapable(_toToken), "Can't swap for this token");
+        require(isRedeemable(_toToken), "Can't swap for this token");
 
         // instantiate sushi
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);

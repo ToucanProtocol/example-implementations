@@ -128,7 +128,7 @@ describe("Offset Helper", function () {
           addresses.nctAddress,
           ethers.utils.parseEther("1.0"),
           {
-            value: ethers.utils.parseEther("4.0"),
+            value: ethers.utils.parseEther("5.0"),
           }
         )
       ).wait();
@@ -174,10 +174,10 @@ describe("Offset Helper", function () {
           .approve(offsetHelper.address, ethers.utils.parseEther("0.1"))
       ).wait();
 
-      const autoRedeemTxn = await (
+      await (
         await offsetHelper
           .connect(signer)
-          .autoRedeem("NCT", ethers.utils.parseEther("0.1"))
+          .autoRedeem(addresses.nctAddress, ethers.utils.parseEther("0.1"))
       ).wait();
 
       expect(
