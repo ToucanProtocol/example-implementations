@@ -35,16 +35,6 @@ contract OffsetHelper is OffsetHelperStorage {
         uint256 _amountToOffset
     ) public {}
 
-    // @param _depositedToken the tokens that the user deposited & wants to use (could be any TCO2)
-    // @param _amountsDeposited the amounts he has deposited of each TCO2
-    // @param _amountToOffset the amount of TCO2 to offset
-    // TODO might choose that this one is futile, unimportant and not build it
-    function autoOffsetUsingTCO2(
-        address[] calldata _depositedTokens,
-        uint256[] calldata _amountsDeposited,
-        uint256 _amountToOffset
-    ) public {}
-
     // checks address and returns if can be used at all by contract
     // @param _erc20Address address of token to be checked
     function isEligible(address _erc20Address) private view returns (bool) {
