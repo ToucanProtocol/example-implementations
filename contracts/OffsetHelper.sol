@@ -25,7 +25,6 @@ contract OffsetHelper is OffsetHelperStorage {
 
         if (isToucanContract) return "TCO2";
 
-        // TODO implement a for loop instead
         if (_erc20Address == eligibleTokenAddresses["BCT"]) return "BCT";
         if (_erc20Address == eligibleTokenAddresses["NCT"]) return "NCT";
         if (_erc20Address == eligibleTokenAddresses["USDC"]) return "USDC";
@@ -38,7 +37,7 @@ contract OffsetHelper is OffsetHelperStorage {
     // @description uses SushiSwap to exchange tokens
     // @param _fromToken token to deposit and swap
     // @param _toToken token to receive after swap
-    // @param _amount amount to swap
+    // @param _amount amount of NCT / BCT wanted
     // @notice needs to be approved on client side
     function swap(
         address _fromToken,
@@ -68,7 +67,7 @@ contract OffsetHelper is OffsetHelperStorage {
         // instantiate sushi
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
-        // establish path (TODO in most cases token -> USDC -> NCT/BCT should work, but I need to test it out)
+        // establish path (in most cases token -> USDC -> NCT/BCT should work)
         // TODO how will I decide wether to use BCT / NCT?
         address[] memory path = new address[](3);
         path[0] = _fromToken;
@@ -76,9 +75,9 @@ contract OffsetHelper is OffsetHelperStorage {
         path[2] = eligibleTokenAddresses["NCT"];
 
         // swap tokens for tokens
-        routerSushi.swapExactTokensForTokens(
+        routerSushi.swapTokensForExactTokens(
             _amount,
-            (_amount / 10) * 9,
+            (_amount * 10),
             path,
             msg.sender,
             block.timestamp
@@ -87,12 +86,16 @@ contract OffsetHelper is OffsetHelperStorage {
 
     // @description uses SushiSwap to exchange tokens
     // @param _toToken token to receive after swap
-    // @param _amount amount to swap
+    // @param _amount amount of NCT / BCT to receive after swap
     // @notice needs to be approved on client side
-    function swap(address _toToken) public payable {
-        // TODO need to finish and test this function
-        // check that user sent MATIC
-        require(msg.value > 0, "You need to send some MATIC or a token");
+    function swap(address _toToken, uint256 _amount) public payable {
+        // check eligibility of token to swap for
+        string memory eligibilityOfSwapedToken = checkToken(_toToken);
+        require(
+            keccak256(abi.encodePacked(eligibilityOfSwapedToken)) !=
+                keccak256(abi.encodePacked("false")),
+            "Can't swap for this token"
+        );
 
         // instantiate sushi
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
@@ -105,8 +108,8 @@ contract OffsetHelper is OffsetHelperStorage {
         path[2] = eligibleTokenAddresses["NCT"];
 
         // swap MATIC for tokens
-        routerSushi.swapExactETHForTokens(
-            msg.value,
+        routerSushi.swapETHForExactTokens{value: msg.value}(
+            _amount,
             path,
             msg.sender,
             block.timestamp
