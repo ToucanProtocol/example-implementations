@@ -121,6 +121,8 @@ describe("Offset Helper", function () {
     });
 
     it("Should swap MATIC for 1.0 NCT", async function () {
+      // TODO for some reason it's failing to send back unused MATIC
+      // also, the swap method may send unused MATIC to OffsetHelper instead of to the user
       await (
         await offsetHelper["swap(address,uint256)"](
           addresses.nctAddress,
