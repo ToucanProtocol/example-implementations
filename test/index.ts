@@ -194,8 +194,57 @@ describe("Offset Helper", function () {
   });
 
   describe("autoRetire()", function () {
-    it("Should retire 10 TCO2", async function () {
-      // TODO write tests for autoRetire()
+    it("Should retire 1 TCO2", async function () {
+      // I will impersonate an account that has NCT. I'll also give it some wei, just to be safe
+      await network.provider.request({
+        method: "hardhat_stopImpersonatingAccount",
+        params: [addresses.myAddress],
+      });
+      await network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: ["0xdab7f2bc9aa986d9759718203c9a76534894e900"],
+      });
+      await network.provider.send("hardhat_setBalance", [
+        "0xdab7f2bc9aa986d9759718203c9a76534894e900",
+        ethers.utils.parseEther("2.0").toHexString(),
+      ]);
+      const signer = await ethers.getSigner(
+        "0xdab7f2bc9aa986d9759718203c9a76534894e900"
+      );
+
+      // @ts-ignore
+      nct = new ethers.Contract(addresses.nctAddress, nctAbi.abi, owner);
+
+      const initialBalance = await nct.balanceOf(
+        "0xdab7f2bc9aa986d9759718203c9a76534894e900"
+      );
+
+      await (
+        await nct
+          .connect(signer)
+          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .autoRedeem(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+      ).wait();
+
+      expect(
+        await nct.balanceOf("0xdab7f2bc9aa986d9759718203c9a76534894e900")
+      ).to.be.eql(initialBalance.sub(ethers.utils.parseEther("1.0")));
+
+      // TODO the problem is I need to approve the contract from the TCO contract like this
+      // tco2xyz.approve(externalOffsetterContract, 100)
+      // but how do I do that when I don't know what TCO2 the user has since I used autoRedeem
+      await (
+        await offsetHelper
+          .connect(signer)
+          .autoRetire(ethers.utils.parseEther("1.0"), addresses.nctAddress)
+      ).wait();
+
+      // TODO test supply of TCO2
     });
   });
 });

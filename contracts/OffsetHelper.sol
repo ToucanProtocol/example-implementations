@@ -196,15 +196,17 @@ contract OffsetHelper is OffsetHelperStorage {
                 uint256 balance = ToucanCarbonOffsets(tco2).balanceOf(
                     address(this)
                 );
+                i += 1;
+                if (balance == 0) continue;
                 uint256 amountToRetire = remainingAmount > balance
                     ? balance
                     : remainingAmount;
+                // TODO this needs to be approved but how do I do it without knowing the TCO2 address
                 ToucanCarbonOffsets(tco2).retireFrom(
                     msg.sender,
                     amountToRetire
                 );
                 remainingAmount -= amountToRetire;
-                i += 1;
             }
         }
     }
