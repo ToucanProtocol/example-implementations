@@ -12,6 +12,7 @@ import "./uniswapv2/IUniswapV2Router02.sol";
 contract OffsetHelper is OffsetHelperStorage {
     using SafeERC20 for IERC20;
 
+    // @description this is the autoOffset method you use if you have tokens like USDC, WETH, WMATIC
     // @param _depositedToken the token the user sends (could be USDC, WETH, WMATIC)
     // @param _carbonToken the redeem token that the user wants to use (could be NCT or BCT)
     // @param _amountToOffset the amount of TCO2 to offset
@@ -19,21 +20,47 @@ contract OffsetHelper is OffsetHelperStorage {
         address _depositedToken,
         address _carbonToken,
         uint256 _amountToOffset
-    ) public {}
+    ) public {
+        // swap whatever token for BCT / NCT
+        swap(_depositedToken, _carbonToken, _amountToOffset);
 
+        // redeem BCT / NCT for TCO2s
+        autoRedeem(_carbonToken, _amountToOffset);
+
+        // retire the TCO2s to achieve offset
+        autoRetire(_amountToOffset, _carbonToken);
+    }
+
+    // @description this is the autoOffset method you use if you have MATIC, but no tokens
     // @param _carbonToken the redeem token that the user wants to use (could be NCT or BCT)
     // @param _amountToOffset the amount of TCO2 to offset
     function autoOffset(address _carbonToken, uint256 _amountToOffset)
         public
         payable
-    {}
+    {
+        // swap MATIC for BCT / NCT
+        swap(_carbonToken, _amountToOffset);
 
+        // redeem BCT / NCT for TCO2s
+        autoRedeem(_carbonToken, _amountToOffset);
+
+        // retire the TCO2s to achieve offset
+        autoRetire(_amountToOffset, _carbonToken);
+    }
+
+    // @description this is the autoOffset method you use if you already have BCT / NCT
     // @param _depositedToken the redeem token that the user deposited & wants to use (could be NCT or BCT)
     // @param _amountToOffset the amount of TCO2 to offset
     function autoOffsetUsingRedeemableToken(
         address _depositedToken,
         uint256 _amountToOffset
-    ) public {}
+    ) public {
+        // redeem BCT / NCT for TCO2s
+        autoRedeem(_depositedToken, _amountToOffset);
+
+        // retire the TCO2s to achieve offset
+        autoRetire(_amountToOffset, _depositedToken);
+    }
 
     // checks address and returns if can be used at all by contract
     // @param _erc20Address address of token to be checked
