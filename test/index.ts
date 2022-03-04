@@ -234,13 +234,26 @@ describe("Offset Helper", function () {
       ).wait();
 
       // TODO expect something
-    });
+      expect(
+        ethers.utils.formatEther(await nct.balanceOf(offsetHelper.address))
+      ).to.be.eql("0.0");
 
-    it("Should be reverted with 'blah blah.'", async function () {
-      return;
-      await expect("0.1").to.be.revertedWith(
-        "You can't offset more than your footprint."
-      );
+      expect(
+        ethers.utils.formatEther(
+          await offsetHelper.balances(
+            "0xdab7f2bc9aa986d9759718203c9a76534894e900",
+            addresses.nctAddress
+          )
+        )
+      ).to.be.eql("0.0");
+
+      expect(
+        ethers.utils.formatEther(
+          await offsetHelper.tco2Balance(
+            "0xdab7f2bc9aa986d9759718203c9a76534894e900"
+          )
+        )
+      ).to.be.eql("1.0");
     });
   });
 
