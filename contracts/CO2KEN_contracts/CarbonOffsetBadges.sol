@@ -5,15 +5,15 @@
 // If you encounter a vulnerability or an issue, please contact <security@toucan.earth> or visit security.toucan.earth
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC721/extensions/ERC721EnumerableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/CountersUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/AddressUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 
-import './IToucanContractRegistry.sol';
-import './CarbonOffsetBadgesStorage.sol';
-import './CarbonProjects.sol';
+import "./IToucanContractRegistry.sol";
+import "./CarbonOffsetBadgesStorage.sol";
+import "./CarbonProjects.sol";
 
 /// @notice The `CarbonOffsetBadges` contract lets users mint Badge-NFTs
 /// These Badges serve to display how much CO2 a user has offset via the protocols
@@ -37,8 +37,8 @@ contract CarbonOffsetBadges is
     function initialize(address _contractRegistry) public virtual initializer {
         __Context_init_unchained();
         __ERC721_init_unchained(
-            'Toucan Protocol: Retirement Badges for Carbon Offset Project Vintage Batches',
-            'TOUCAN-COBRB'
+            "Toucan Protocol: Retirement Badges for Carbon Offset Project Vintage Batches",
+            "TOUCAN-COBRB"
         );
         __Ownable_init_unchained();
         contractRegistry = _contractRegistry;
@@ -70,7 +70,7 @@ contract CarbonOffsetBadges is
             IToucanContractRegistry(contractRegistry).checkERC20(
                 _msgSender()
             ) == true,
-            'pERC20 not official'
+            "pERC20 not official"
         );
         _tokenIds.increment();
         uint256 newItemId = _tokenIds.current();
@@ -99,7 +99,7 @@ contract CarbonOffsetBadges is
     {
         require(
             _exists(tokenId),
-            'ERC721URIStorage: URI set of nonexistent token'
+            "ERC721URIStorage: URI set of nonexistent token"
         );
         bytes32 h = keccak256(abi.encode(_tokenURI));
         require(hashes[h] == false);
@@ -118,7 +118,7 @@ contract CarbonOffsetBadges is
     {
         require(
             _exists(tokenId),
-            'ERC721URIStorage: URI query for nonexistent token'
+            "ERC721URIStorage: URI query for nonexistent token"
         );
 
         string memory uri = badges[tokenId].tokenURI;

@@ -55,6 +55,8 @@ contract OffsetHelper is OffsetHelperStorage {
         address _depositedToken,
         uint256 _amountToOffset
     ) public {
+        // TODO deposit BCT / NCT
+
         // redeem BCT / NCT for TCO2s
         autoRedeem(_depositedToken, _amountToOffset);
 
@@ -93,7 +95,7 @@ contract OffsetHelper is OffsetHelperStorage {
         return false;
     }
 
-    // @description uses SushiSwap to exchange tokens
+    // @description uses SushiSwap to exchange tokens for BCT / NCT that is deposited in this contract
     // @param _fromToken token to deposit and swap
     // @param _toToken token to receive after swap
     // @param _amount amount of NCT / BCT wanted
@@ -122,19 +124,20 @@ contract OffsetHelper is OffsetHelperStorage {
         address[] memory path = new address[](3);
         path[0] = _fromToken;
         path[1] = eligibleTokenAddresses["USDC"];
-        path[2] = eligibleTokenAddresses["NCT"];
+        path[2] = _toToken;
 
         // swap tokens for tokens
         routerSushi.swapTokensForExactTokens(
             _amount,
             (_amount * 10),
             path,
-            msg.sender,
+            address(this),
             block.timestamp
         );
+        balances[msg.sender][path[2]] += _amount;
     }
 
-    // @description uses SushiSwap to exchange tokens
+    // @description uses SushiSwap to exchange MATIC for BCT / NCT that is deposited in this contract
     // @param _toToken token to receive after swap
     // @param _amount amount of NCT / BCT to receive after swap
     // @notice needs to be provided a message value on client side
@@ -149,15 +152,28 @@ contract OffsetHelper is OffsetHelperStorage {
         address[] memory path = new address[](3);
         path[0] = eligibleTokenAddresses["WMATIC"];
         path[1] = eligibleTokenAddresses["USDC"];
-        path[2] = eligibleTokenAddresses["NCT"];
+        path[2] = _toToken;
 
         // swap MATIC for tokens
+        // TODO maybe keep the token within this contract since I won't be using retireFrom() anymore anyway
+        // and this is becoming semi-custodial
         routerSushi.swapETHForExactTokens{value: msg.value}(
             _amount,
             path,
-            msg.sender,
+            address(this),
             block.timestamp
         );
+        balances[msg.sender][path[2]] += _amount;
+    }
+
+    // @description allow people to deposit BCT / NCT
+    // @notice needs to be approved
+    function deposit(address _erc20Addr, uint256 _amount) public {
+        // TODO build this method
+        require(isRedeemable(_erc20Addr), "Can't deposit this token");
+
+        IERC20(_erc20Addr).safeTransferFrom(msg.sender, address(this), _amount);
+        balances[msg.sender][_erc20Addr] += _amount;
     }
 
     // @description redeems an amount of NCT / BCT for TCO2
@@ -168,38 +184,20 @@ contract OffsetHelper is OffsetHelperStorage {
         require(isRedeemable(_fromToken), "Can't redeem this token.");
 
         if (_fromToken == eligibleTokenAddresses["NCT"]) {
+            require(
+                balances[msg.sender][_fromToken] >= _amount,
+                "You haven't deposited enough NCT"
+            );
+
             // store the contract in a variable for readability since it will be used a few times
             NatureCarbonTonne NCTImplementation = NatureCarbonTonne(_fromToken);
 
-            // do a safe transfer from user to this contract;
-            IERC20(_fromToken).safeTransferFrom(
-                msg.sender,
-                address(this),
-                _amount
-            );
-
             // auto redeem NCT for TCO2; will transfer to this contract automatically picked TCO2
             NCTImplementation.redeemAuto(_amount);
+            balances[msg.sender][_fromToken] -= _amount;
 
-            // I'm attempting to loop over all possible TCO2s that I could have received from redeeming
-            // and transfer of each to the user until the whole amount (minus fees) has been transferred
-            // TODO may need to calculate fees differently
-            uint256 remainingAmount = (_amount / 10) * 9;
-            uint256 i = 0;
-            address[] memory scoredTCO2s = NCTImplementation.getScoredTCO2s();
-            uint256 scoredTCO2Len = scoredTCO2s.length;
-            while (remainingAmount > 0 && i < scoredTCO2Len) {
-                address tco2 = scoredTCO2s[i];
-                uint256 balance = ToucanCarbonOffsets(tco2).balanceOf(
-                    address(this)
-                );
-                uint256 amountToTransfer = remainingAmount > balance
-                    ? balance
-                    : remainingAmount;
-                IERC20(tco2).transfer(msg.sender, amountToTransfer);
-                remainingAmount -= amountToTransfer;
-                i += 1;
-            }
+            // update TCO2 balances of the user to reflect the redeeming
+            tco2Balance[msg.sender] += _amount;
         }
     }
 
@@ -212,7 +210,7 @@ contract OffsetHelper is OffsetHelperStorage {
             // store the contract in a variable for readability since it will be used a few times
             NatureCarbonTonne NCTImplementation = NatureCarbonTonne(_pool);
 
-            // I'm attempting to loop over all possible TCO2s that the user could have
+            // I'm attempting to loop over all possible TCO2s that the contract could have
             // and retire each until the whole amount has been retired / offset
             uint256 remainingAmount = _amount;
             uint256 i = 0;
@@ -220,21 +218,20 @@ contract OffsetHelper is OffsetHelperStorage {
             uint256 scoredTCO2Len = scoredTCO2s.length;
             while (remainingAmount > 0 && i < scoredTCO2Len) {
                 address tco2 = scoredTCO2s[i];
-                uint256 balance = ToucanCarbonOffsets(tco2).balanceOf(
-                    address(this)
-                );
+                uint256 balance = balances[msg.sender][tco2];
                 i += 1;
                 if (balance == 0) continue;
                 uint256 amountToRetire = remainingAmount > balance
                     ? balance
                     : remainingAmount;
-                // TODO this needs to be approved but how do I do it without knowing the TCO2 address
-                ToucanCarbonOffsets(tco2).retireFrom(
-                    msg.sender,
-                    amountToRetire
-                );
+                ToucanCarbonOffsets(tco2).retire(amountToRetire);
                 remainingAmount -= amountToRetire;
             }
+
+            // update the user's TCO2 balance
+            tco2Balance[msg.sender] -= _amount;
         }
     }
+
+    // TODO a method to mint retirements NFT
 }

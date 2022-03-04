@@ -5,22 +5,22 @@
 // If you encounter a vulnerability or an issue, please contact <security@toucan.earth> or visit security.toucan.earth
 pragma solidity ^0.8.0;
 
-import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
-import '@openzeppelin/contracts/token/ERC721/IERC721.sol';
-import '@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol';
-import '@openzeppelin/contracts/utils/Context.sol';
-import '@openzeppelin/contracts/utils/Strings.sol';
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721.sol";
+import "@openzeppelin/contracts/token/ERC721/IERC721Receiver.sol";
+import "@openzeppelin/contracts/utils/Context.sol";
+import "@openzeppelin/contracts/utils/Strings.sol";
 
-import './IToucanContractRegistry.sol';
-import './ICarbonOffsetBatches.sol';
-import './ICarbonOffsetBadges.sol';
-import './CarbonProjects.sol';
-import './CarbonProjectVintages.sol';
+import "./IToucanContractRegistry.sol";
+import "./ICarbonOffsetBatches.sol";
+import "./ICarbonOffsetBadges.sol";
+import "./CarbonProjects.sol";
+import "./CarbonProjectVintages.sol";
 // import './ICarbonProjectVintages.sol';
-import './CarbonProjectVintageTypes.sol';
-import './ToucanCarbonOffsetsStorage.sol';
-import './ToucanCarbonOffsetsFactory.sol';
-import './CarbonOffsetBatchesTypes.sol';
+import "./CarbonProjectVintageTypes.sol";
+import "./ToucanCarbonOffsetsStorage.sol";
+import "./ToucanCarbonOffsetsFactory.sol";
+import "./CarbonOffsetBatchesTypes.sol";
 
 /// @notice Implementation contract of the TCO2 tokens (ERC20)
 /// These tokenized carbon offsets are specific to a vintage and its associated attributes
@@ -42,7 +42,7 @@ contract ToucanCarbonOffsets is
         bool _paused = ToucanCarbonOffsetsFactory(
             ToucanCarbonOffsetsFactoryAddress
         ).paused();
-        require(!_paused, 'Error: TCO2 contract is paused');
+        require(!_paused, "Error: TCO2 contract is paused");
         _;
     }
 
@@ -65,9 +65,9 @@ contract ToucanCarbonOffsets is
         return
             string(
                 abi.encodePacked(
-                    'Toucan Protocol: TCO2-',
+                    "Toucan Protocol: TCO2-",
                     globalProjectId,
-                    '-',
+                    "-",
                     vintageName
                 )
             );
@@ -80,7 +80,7 @@ contract ToucanCarbonOffsets is
         (globalProjectId, vintageName) = getGlobalProjectVintageIdentifiers();
         return
             string(
-                abi.encodePacked('TCO2-', globalProjectId, '-', vintageName)
+                abi.encodePacked("TCO2-", globalProjectId, "-", vintageName)
             );
     }
 
@@ -130,7 +130,7 @@ contract ToucanCarbonOffsets is
         // msg.sender is the CarbonOffsetBatches contract
         require(
             checkWhiteListed(msg.sender),
-            'Error: Batch-NFT not from whitelisted contract'
+            "Error: Batch-NFT not from whitelisted contract"
         );
 
         (
@@ -140,11 +140,11 @@ contract ToucanCarbonOffsets is
         ) = ICarbonOffsetBatches(msg.sender).getBatchNFTData(tokenId);
         require(
             checkMatchingAttributes(projectVintageTokenId),
-            'Error: non-matching NFT'
+            "Error: non-matching NFT"
         );
         require(
             status == RetirementStatus.Confirmed,
-            'BatchNFT not yet confirmed'
+            "BatchNFT not yet confirmed"
         );
 
         minterToId[from] = tokenId;
@@ -154,7 +154,7 @@ contract ToucanCarbonOffsets is
         uint256 remainingSpace = getRemaining();
         require(
             remainingSpace > quantity,
-            'Error: Quantity in batch is higher than total vintages'
+            "Error: Quantity in batch is higher than total vintages"
         );
         _mint(from, quantity);
         return this.onERC721Received.selector;
@@ -232,7 +232,7 @@ contract ToucanCarbonOffsets is
         uint256 currentAllowance = allowance(account, _msgSender());
         require(
             currentAllowance >= amount,
-            'ERC20: retire amount exceeds allowance'
+            "ERC20: retire amount exceeds allowance"
         );
         unchecked {
             _approve(account, _msgSender(), currentAllowance - amount);
@@ -257,7 +257,7 @@ contract ToucanCarbonOffsets is
             .carbonOffsetBadgesAddress();
         require(
             retiredAmount[msg.sender] >= amount,
-            'Error: Cannot mint more than user has retired'
+            "Error: Cannot mint more than user has retired"
         );
 
         ICarbonOffsetBadges(badgeAddr).mintBadge(
