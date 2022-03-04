@@ -142,6 +142,9 @@ contract OffsetHelper is OffsetHelperStorage {
     // @param _amount amount of NCT / BCT to receive after swap
     // @notice needs to be provided a message value on client side
     function swap(address _toToken, uint256 _amount) public payable {
+        // TODO for some reason it's failing to send back unused MATIC
+        // also, the swap method may send unused MATIC to OffsetHelper instead of to the user
+
         // check eligibility of token to swap for
         require(isRedeemable(_toToken), "Can't swap for this token");
 
