@@ -304,7 +304,13 @@ describe("Offset Helper", function () {
           .autoRetire(ethers.utils.parseEther("1.0"), addresses.nctAddress)
       ).wait();
 
-      // TODO expect something
+      expect(
+        ethers.utils.formatEther(
+          await offsetHelper.tco2Balance(
+            "0xdab7f2bc9aa986d9759718203c9a76534894e900"
+          )
+        )
+      ).to.be.eql("0.0");
     });
   });
 });
