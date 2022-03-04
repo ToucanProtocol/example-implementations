@@ -158,7 +158,6 @@ contract OffsetHelper is OffsetHelperStorage {
         path[2] = _toToken;
 
         // swap MATIC for tokens
-        // TODO maybe keep the token within this contract since I won't be using retireFrom() anymore anyway
         // and this is becoming semi-custodial
         routerSushi.swapETHForExactTokens{value: msg.value}(
             _amount,
@@ -172,7 +171,6 @@ contract OffsetHelper is OffsetHelperStorage {
     // @description allow people to deposit BCT / NCT
     // @notice needs to be approved
     function deposit(address _erc20Addr, uint256 _amount) public {
-        // TODO build this method
         require(isRedeemable(_erc20Addr), "Can't deposit this token");
 
         IERC20(_erc20Addr).safeTransferFrom(msg.sender, address(this), _amount);
