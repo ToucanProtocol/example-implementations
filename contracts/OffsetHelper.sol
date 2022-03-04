@@ -55,7 +55,7 @@ contract OffsetHelper is OffsetHelperStorage {
         address _depositedToken,
         uint256 _amountToOffset
     ) public {
-        // TODO deposit BCT / NCT
+        deposit(_depositedToken, _amountToOffset);
 
         // redeem BCT / NCT for TCO2s
         autoRedeem(_depositedToken, _amountToOffset);
