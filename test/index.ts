@@ -357,7 +357,77 @@ describe("Offset Helper", function () {
           )
       ).wait();
 
-      // TODO how do I test the retirement itself better
+      // TODO there should be a better more accurate way to test this, like maybe finding the total TCO2 supply
+      expect(
+        ethers.utils.formatEther(
+          await offsetHelper.tco2Balance(
+            "0xdc9232e2df177d7a12fdff6ecbab114e2231198d"
+          )
+        )
+      ).to.be.eql("0.0");
+    });
+
+    it("Should retire 1 TCO2 from MATIC", async function () {
+      await (
+        await offsetHelper["autoOffset(address,uint256)"](
+          addresses.nctAddress,
+          ethers.utils.parseEther("1.0")
+        )
+      ).wait();
+
+      // TODO there should be a better more accurate way to test this, like maybe finding the total TCO2 supply
+      expect(
+        ethers.utils.formatEther(
+          await offsetHelper.tco2Balance(addresses.myAddress)
+        )
+      ).to.be.eql("0.0");
+    });
+
+    it("Should retire 1 TCO2 from NCT", async function () {
+      // since I have no NCT, I need to impersonate an account that has it
+      // I'll also give it some wei, just to be safe
+      await network.provider.request({
+        method: "hardhat_stopImpersonatingAccount",
+        params: [addresses.myAddress],
+      });
+      await network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: ["0xdab7f2bc9aa986d9759718203c9a76534894e900"],
+      });
+      await network.provider.send("hardhat_setBalance", [
+        "0xdab7f2bc9aa986d9759718203c9a76534894e900",
+        ethers.utils.parseEther("2.0").toHexString(),
+      ]);
+      const signer = await ethers.getSigner(
+        "0xdab7f2bc9aa986d9759718203c9a76534894e900"
+      );
+
+      // @ts-ignore
+      nct = new ethers.Contract(addresses.nctAddress, nctAbi.abi, owner);
+
+      await (
+        await nct
+          .connect(signer)
+          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .autoOffsetUsingRedeemableToken(
+            addresses.nctAddress,
+            ethers.utils.parseEther("1.0")
+          )
+      ).wait();
+
+      // TODO there should be a better more accurate way to test this, like maybe finding the total TCO2 supply
+      expect(
+        ethers.utils.formatEther(
+          await offsetHelper.tco2Balance(
+            "0xdab7f2bc9aa986d9759718203c9a76534894e900"
+          )
+        )
+      ).to.be.eql("0.0");
     });
   });
 });
