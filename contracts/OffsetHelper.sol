@@ -12,16 +12,16 @@ import "./uniswapv2/IUniswapV2Router02.sol";
 contract OffsetHelper is OffsetHelperStorage {
     using SafeERC20 for IERC20;
 
-    // @description this is the autoOffset method you use if you have tokens like USDC, WETH, WMATIC
-    // @param _depositedToken the token the user sends (could be USDC, WETH, WMATIC)
-    // @param _carbonToken the redeem token that the user wants to use (could be NCT or BCT)
+    // @description this is the autoOffset method for when the user wants to input tokens like USDC, WETH, WMATIC
+    // @param _depositedToken the address of the token that the user sends (could be USDC, WETH, WMATIC)
+    // @param _carbonToken the pool that the user wants to use (could be NCT or BCT)
     // @param _amountToOffset the amount of TCO2 to offset
     function autoOffset(
         address _depositedToken,
         address _carbonToken,
         uint256 _amountToOffset
     ) public {
-        // swap whatever token for BCT / NCT
+        // swap input token for BCT / NCT
         swap(_depositedToken, _carbonToken, _amountToOffset);
 
         // redeem BCT / NCT for TCO2s
@@ -31,8 +31,8 @@ contract OffsetHelper is OffsetHelperStorage {
         autoRetire(_amountToOffset, _carbonToken);
     }
 
-    // @description this is the autoOffset method you use if you have MATIC, but no tokens
-    // @param _carbonToken the redeem token that the user wants to use (could be NCT or BCT)
+    // @description this is the autoOffset method for when the user wants to input MATIC
+    // @param _carbonToken the pool that the user wants to use (could be NCT or BCT)
     // @param _amountToOffset the amount of TCO2 to offset
     function autoOffset(address _carbonToken, uint256 _amountToOffset)
         public
@@ -48,13 +48,14 @@ contract OffsetHelper is OffsetHelperStorage {
         autoRetire(_amountToOffset, _carbonToken);
     }
 
-    // @description this is the autoOffset method you use if you already have BCT / NCT
-    // @param _depositedToken the redeem token that the user deposited & wants to use (could be NCT or BCT)
+    // @description this is the autoOffset method for when the user already has and wants to input BCT / NCT
+    // @param _depositedToken the pool token that the user wants to use (could be NCT or BCT)
     // @param _amountToOffset the amount of TCO2 to offset
     function autoOffsetUsingRedeemableToken(
         address _depositedToken,
         uint256 _amountToOffset
     ) public {
+        // deposit pool token from user to this contract
         deposit(_depositedToken, _amountToOffset);
 
         // redeem BCT / NCT for TCO2s
@@ -64,7 +65,7 @@ contract OffsetHelper is OffsetHelperStorage {
         autoRetire(_amountToOffset, _depositedToken);
     }
 
-    // checks address and returns if can be used at all by contract
+    // checks address and returns if can be used at all by the contract
     // @param _erc20Address address of token to be checked
     function isEligible(address _erc20Address) private view returns (bool) {
         bool isToucanContract = IToucanContractRegistry(contractRegistryAddress)
@@ -78,7 +79,7 @@ contract OffsetHelper is OffsetHelperStorage {
         return false;
     }
 
-    // checks address and returns if can be used in a swap
+    // checks address and returns if it can be used in a swap
     // @param _erc20Address address of token to be checked
     function isSwapable(address _erc20Address) private view returns (bool) {
         if (_erc20Address == eligibleTokenAddresses["USDC"]) return true;
@@ -87,7 +88,7 @@ contract OffsetHelper is OffsetHelperStorage {
         return false;
     }
 
-    // checks address and returns if can be used in a redeem
+    // checks address and returns if can it's a pool token and can be redeemed
     // @param _erc20Address address of token to be checked
     function isRedeemable(address _erc20Address) private view returns (bool) {
         if (_erc20Address == eligibleTokenAddresses["BCT"]) return true;
@@ -95,11 +96,11 @@ contract OffsetHelper is OffsetHelperStorage {
         return false;
     }
 
-    // @description uses SushiSwap to exchange tokens for BCT / NCT that is deposited in this contract
+    // @description uses SushiSwap to exchange eligible tokens for BCT / NCT
     // @param _fromToken token to deposit and swap
-    // @param _toToken token to receive after swap
+    // @param _toToken token to swap for (will be held within contract)
     // @param _amount amount of NCT / BCT wanted
-    // @notice needs to be approved on client side
+    // @notice needs to be approved on the client side
     function swap(
         address _fromToken,
         address _toToken,
@@ -114,10 +115,10 @@ contract OffsetHelper is OffsetHelperStorage {
         // transfer token from user to this contract
         IERC20(_fromToken).safeTransferFrom(msg.sender, address(this), _amount);
 
-        // approve sushi
+        // approve sushi router
         IERC20(_fromToken).approve(sushiRouterAddress, _amount);
 
-        // instantiate sushi
+        // instantiate sushi router
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
         // establish path (in most cases token -> USDC -> NCT/BCT should work)
@@ -126,7 +127,7 @@ contract OffsetHelper is OffsetHelperStorage {
         path[1] = eligibleTokenAddresses["USDC"];
         path[2] = _toToken;
 
-        // swap tokens for tokens
+        // swap input token for pool token
         routerSushi.swapTokensForExactTokens(
             _amount,
             (_amount * 10),
@@ -134,12 +135,14 @@ contract OffsetHelper is OffsetHelperStorage {
             address(this),
             block.timestamp
         );
+
+        // update balances
         balances[msg.sender][path[2]] += _amount;
     }
 
-    // @description uses SushiSwap to exchange MATIC for BCT / NCT that is deposited in this contract
-    // @param _toToken token to receive after swap
-    // @param _amount amount of NCT / BCT to receive after swap
+    // @description uses SushiSwap to exchange MATIC for BCT / NCT
+    // @param _toToken token to swap for (will be held within contract)
+    // @param _amount amount of NCT / BCT wanted
     // @notice needs to be provided a message value on client side
     function swap(address _toToken, uint256 _amount) public payable {
         // TODO for some reason it's failing to send back unused MATIC
@@ -151,20 +154,21 @@ contract OffsetHelper is OffsetHelperStorage {
         // instantiate sushi
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
-        // sushi router expects path[0] == WMATIC
+        // sushi router expects path[0] == WMATIC, but otherwise the path will resemble the one above
         address[] memory path = new address[](3);
         path[0] = eligibleTokenAddresses["WMATIC"];
         path[1] = eligibleTokenAddresses["USDC"];
         path[2] = _toToken;
 
         // swap MATIC for tokens
-        // and this is becoming semi-custodial
         routerSushi.swapETHForExactTokens{value: msg.value}(
             _amount,
             path,
             address(this),
             block.timestamp
         );
+
+        // update balances
         balances[msg.sender][path[2]] += _amount;
     }
 
@@ -178,8 +182,8 @@ contract OffsetHelper is OffsetHelperStorage {
     }
 
     // @description redeems an amount of NCT / BCT for TCO2
-    // @param _fromToken "NCT" | "BCT"
-    // @param _amount amount of NCT / BCT to redeem
+    // @param _fromToken could be the address of NCT or BCT
+    // @param _amount amount to redeem
     // @notice needs to be approved on the client side
     function autoRedeem(address _fromToken, uint256 _amount) public {
         require(isRedeemable(_fromToken), "Can't redeem this token.");
@@ -190,10 +194,10 @@ contract OffsetHelper is OffsetHelperStorage {
                 "You haven't deposited enough NCT"
             );
 
-            // store the contract in a variable for readability since it will be used a few times
+            // instantiate NCT
             NatureCarbonTonne NCTImplementation = NatureCarbonTonne(_fromToken);
 
-            // auto redeem NCT for TCO2; will transfer to this contract automatically picked TCO2
+            // auto redeem NCT for TCO2; will transfer automatically picked TCO2 to this contract
             NCTImplementation.redeemAuto(_amount);
             balances[msg.sender][_fromToken] -= _amount;
 
