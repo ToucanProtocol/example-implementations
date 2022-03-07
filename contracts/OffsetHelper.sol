@@ -209,21 +209,26 @@ contract OffsetHelper is OffsetHelperStorage {
     // @param _amount the amount of TCO2 to retire
     // @param _pool the pool that will be used to get scoredTCO2s
     function autoRetire(uint256 _amount, address _pool) public {
-        require(isRedeemable(_pool), "Can't use this pool.");
+        require(isRedeemable(_pool), "Can't use this pool for scoredTCO2s.");
+        require(
+            tco2Balance[msg.sender] >= _amount,
+            "You don't have enough TCO2 in this contract."
+        );
 
         if (_pool == eligibleTokenAddresses["NCT"]) {
-            // store the contract in a variable for readability since it will be used a few times
+            // instantiate NCT
             NatureCarbonTonne NCTImplementation = NatureCarbonTonne(_pool);
 
             // I'm attempting to loop over all possible TCO2s that the contract could have
-            // and retire each until the whole amount has been retired / offset
+            // see the contract's balance for said TCO2
+            // and retire until the whole amount has been retired
             uint256 remainingAmount = _amount;
             uint256 i = 0;
             address[] memory scoredTCO2s = NCTImplementation.getScoredTCO2s();
             uint256 scoredTCO2Len = scoredTCO2s.length;
             while (remainingAmount > 0 && i < scoredTCO2Len) {
                 address tco2 = scoredTCO2s[i];
-                uint256 balance = balances[msg.sender][tco2];
+                uint256 balance = IERC20(tco2).balanceOf(address(this));
                 i += 1;
                 if (balance == 0) continue;
                 uint256 amountToRetire = remainingAmount > balance
