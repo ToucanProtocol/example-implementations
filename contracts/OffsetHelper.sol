@@ -240,8 +240,16 @@ contract OffsetHelper is OffsetHelperStorage {
 
             // update the user's TCO2 balance
             tco2Balance[msg.sender] -= _amount;
+
+            // record how much user has offset (will be useful in minting the NFT for user)
+            overallOffsetAmount[msg.sender] += _amount;
         }
     }
 
-    // TODO a method to mint retirements NFT
+    // @description mints NFT for all the TCO2 the user has offset through this contract
+    function mintNFT() public {
+        // require the user has overallOffsetAmount > 0
+        // mint NFT
+        // reset overallOffsetAmount for user to 0
+    }
 }

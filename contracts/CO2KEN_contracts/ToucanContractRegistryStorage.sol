@@ -15,5 +15,5 @@ contract ToucanContractRegistryStorage {
 
     mapping(address => bool) public projectVintageERC20Registry;
 
-    bytes32 public constant PAUSER_ROLE = keccak256('PAUSER_ROLE');
+    bytes32 public constant PAUSER_ROLE = keccak256("PAUSER_ROLE");
 }

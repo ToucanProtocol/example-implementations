@@ -19,7 +19,7 @@ contract OffsetHelperStorage is OwnableUpgradeable {
     mapping(address => mapping(address => uint256)) public balances;
     // user => amount
     mapping(address => uint256) public tco2Balance;
-    // user => amount they've offset ever
+    // user => amount they've offset with this contract since it's been deployed
     mapping(address => uint256) public overallOffsetAmount;
 
     constructor() {
