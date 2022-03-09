@@ -368,7 +368,11 @@ describe("Offset Helper", function () {
       await (
         await offsetHelper["autoOffset(address,uint256)"](
           addresses.nctAddress,
-          ethers.utils.parseEther("1.0")
+          ethers.utils.parseEther("1.0"),
+          {
+            // TODO there is the question of how much MATIC to send, but I think that should be calculated on the frontend by an SDK
+            value: ethers.utils.parseEther("5.0"),
+          }
         )
       ).wait();
 
