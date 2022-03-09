@@ -11,10 +11,8 @@ import {
   OffsetHelper__factory,
   ToucanCarbonOffsets,
 } from "../typechain";
-import { Pool } from "@uniswap/v3-sdk";
-import { abi as QuoterABI } from "@uniswap/v3-periphery/artifacts/contracts/lens/Quoter.sol/Quoter.json";
-import { BigNumber, BigNumberish } from "ethers";
 import { FormatTypes, Interface } from "ethers/lib/utils";
+import { BigNumber } from "ethers";
 
 const addresses: any = {
   myAddress: "0x721F6f7A29b99CbdE1F18C4AA7D7AEb31eb2923B",
@@ -61,7 +59,7 @@ describe("Offset Helper", function () {
   });
 
   describe("swap()", function () {
-    it("Should swap WETH for 1.0 NCT", async function () {
+    it("Contract should swap WETH for 1.0 NCT", async function () {
       // since I have no WETH, I need to impersonate an account that has it
       // I'll also give it some wei just to be safe
       await network.provider.request({
@@ -108,13 +106,63 @@ describe("Offset Helper", function () {
           )
       ).wait();
 
+      // I expect the offsetHelper will have 1 extra NCT in its balance
       const balance = await nct.balanceOf(offsetHelper.address);
       expect(ethers.utils.formatEther(balance)).to.be.eql(
         ethers.utils.formatEther(
           initialBalance.add(ethers.utils.parseEther("1.0"))
         )
       );
+    });
 
+    it("User's in-contract balance should have 1.0 NCT", async function () {
+      // since I have no WETH, I need to impersonate an account that has it
+      // I'll also give it some wei just to be safe
+      await network.provider.request({
+        method: "hardhat_stopImpersonatingAccount",
+        params: [addresses.myAddress],
+      });
+      await network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: ["0xdc9232e2df177d7a12fdff6ecbab114e2231198d"],
+      });
+      await network.provider.send("hardhat_setBalance", [
+        "0xdc9232e2df177d7a12fdff6ecbab114e2231198d",
+        ethers.utils.parseEther("2.0").toHexString(),
+      ]);
+      const signer = await ethers.getSigner(
+        "0xdc9232e2df177d7a12fdff6ecbab114e2231198d"
+      );
+
+      // @ts-ignore
+      nct = new ethers.Contract(addresses.nctAddress, nctAbi.abi, owner);
+
+      const initialBalance = await nct.balanceOf(offsetHelper.address);
+
+      const iface = new Interface(
+        '[{"inputs":[{"internalType":"address","name":"childChainManager","type":"address"}],"stateMutability":"nonpayable","type":"constructor"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"owner","type":"address"},{"indexed":true,"internalType":"address","name":"spender","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Approval","type":"event"},{"anonymous":false,"inputs":[{"indexed":false,"internalType":"address","name":"userAddress","type":"address"},{"indexed":false,"internalType":"address payable","name":"relayerAddress","type":"address"},{"indexed":false,"internalType":"bytes","name":"functionSignature","type":"bytes"}],"name":"MetaTransactionExecuted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"bytes32","name":"role","type":"bytes32"},{"indexed":true,"internalType":"bytes32","name":"previousAdminRole","type":"bytes32"},{"indexed":true,"internalType":"bytes32","name":"newAdminRole","type":"bytes32"}],"name":"RoleAdminChanged","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"bytes32","name":"role","type":"bytes32"},{"indexed":true,"internalType":"address","name":"account","type":"address"},{"indexed":true,"internalType":"address","name":"sender","type":"address"}],"name":"RoleGranted","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"bytes32","name":"role","type":"bytes32"},{"indexed":true,"internalType":"address","name":"account","type":"address"},{"indexed":true,"internalType":"address","name":"sender","type":"address"}],"name":"RoleRevoked","type":"event"},{"anonymous":false,"inputs":[{"indexed":true,"internalType":"address","name":"from","type":"address"},{"indexed":true,"internalType":"address","name":"to","type":"address"},{"indexed":false,"internalType":"uint256","name":"value","type":"uint256"}],"name":"Transfer","type":"event"},{"inputs":[],"name":"CHILD_CHAIN_ID","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"CHILD_CHAIN_ID_BYTES","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"DEFAULT_ADMIN_ROLE","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"DEPOSITOR_ROLE","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"ERC712_VERSION","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"ROOT_CHAIN_ID","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"ROOT_CHAIN_ID_BYTES","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"owner","type":"address"},{"internalType":"address","name":"spender","type":"address"}],"name":"allowance","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"approve","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"account","type":"address"}],"name":"balanceOf","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"decimals","outputs":[{"internalType":"uint8","name":"","type":"uint8"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"subtractedValue","type":"uint256"}],"name":"decreaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"},{"internalType":"bytes","name":"depositData","type":"bytes"}],"name":"deposit","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"userAddress","type":"address"},{"internalType":"bytes","name":"functionSignature","type":"bytes"},{"internalType":"bytes32","name":"sigR","type":"bytes32"},{"internalType":"bytes32","name":"sigS","type":"bytes32"},{"internalType":"uint8","name":"sigV","type":"uint8"}],"name":"executeMetaTransaction","outputs":[{"internalType":"bytes","name":"","type":"bytes"}],"stateMutability":"payable","type":"function"},{"inputs":[],"name":"getChainId","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"pure","type":"function"},{"inputs":[],"name":"getDomainSeperator","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"user","type":"address"}],"name":"getNonce","outputs":[{"internalType":"uint256","name":"nonce","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"}],"name":"getRoleAdmin","outputs":[{"internalType":"bytes32","name":"","type":"bytes32"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"uint256","name":"index","type":"uint256"}],"name":"getRoleMember","outputs":[{"internalType":"address","name":"","type":"address"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"}],"name":"getRoleMemberCount","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"address","name":"account","type":"address"}],"name":"grantRole","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"address","name":"account","type":"address"}],"name":"hasRole","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"spender","type":"address"},{"internalType":"uint256","name":"addedValue","type":"uint256"}],"name":"increaseAllowance","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"name","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"address","name":"account","type":"address"}],"name":"renounceRole","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"bytes32","name":"role","type":"bytes32"},{"internalType":"address","name":"account","type":"address"}],"name":"revokeRole","outputs":[],"stateMutability":"nonpayable","type":"function"},{"inputs":[],"name":"symbol","outputs":[{"internalType":"string","name":"","type":"string"}],"stateMutability":"view","type":"function"},{"inputs":[],"name":"totalSupply","outputs":[{"internalType":"uint256","name":"","type":"uint256"}],"stateMutability":"view","type":"function"},{"inputs":[{"internalType":"address","name":"recipient","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transfer","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"address","name":"sender","type":"address"},{"internalType":"address","name":"recipient","type":"address"},{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"transferFrom","outputs":[{"internalType":"bool","name":"","type":"bool"}],"stateMutability":"nonpayable","type":"function"},{"inputs":[{"internalType":"uint256","name":"amount","type":"uint256"}],"name":"withdraw","outputs":[],"stateMutability":"nonpayable","type":"function"}]'
+      );
+      iface.format(FormatTypes.full);
+
+      const weth = new ethers.Contract(addresses.wethAddress, iface, owner);
+
+      await (
+        await weth
+          .connect(signer)
+          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          ["swap(address,address,uint256)"](
+            addresses.wethAddress,
+            addresses.nctAddress,
+            ethers.utils.parseEther("1.0")
+          )
+      ).wait();
+
+      // I expect that the user should have his in-contract balance for NCT to be 1.0
       expect(
         ethers.utils.formatEther(
           await offsetHelper.balances(
@@ -141,6 +189,28 @@ describe("Offset Helper", function () {
 
       const balance = await nct.balanceOf(offsetHelper.address);
       expect(ethers.utils.formatEther(balance)).to.be.eql("1.0");
+    });
+
+    it("Surplus MATIC should be sent to user", async function () {
+      const preSwapETHBalance = await owner.getBalance();
+
+      await (
+        await offsetHelper["swap(address,uint256)"](
+          addresses.nctAddress,
+          ethers.utils.parseEther("1.0"),
+          {
+            value: ethers.utils.parseEther("5.0"),
+          }
+        )
+      ).wait();
+
+      const postSwapETHBalance = await owner.getBalance();
+
+      // I'm expecting that the OffsetHelper doesn't have extra MATIC
+      // this check is done to ensure any surplus MATIC has been sent to the user, and not to OffsetHelper
+      expect(ethers.utils.formatEther(preSwapETHBalance)).to.be.eql(
+        ethers.utils.formatEther(postSwapETHBalance)
+      );
     });
   });
 
@@ -191,7 +261,7 @@ describe("Offset Helper", function () {
   });
 
   describe("autoRedeem()", function () {
-    it("Should redeem 1.0 NCT for 1.0 TCO2", async function () {
+    it("OffsetHelper should have 0.0 NCT", async function () {
       // since I have no NCT, I need to impersonate an account that has it
       // I'll also give it some wei, just to be safe
       await network.provider.request({
@@ -231,10 +301,53 @@ describe("Offset Helper", function () {
           .autoRedeem(addresses.nctAddress, ethers.utils.parseEther("1.0"))
       ).wait();
 
+      // expecting offsetHelper to have 0.0 NCT
       expect(
         ethers.utils.formatEther(await nct.balanceOf(offsetHelper.address))
       ).to.be.eql("0.0");
+    });
 
+    it("User's in-contract balance for NCT should be 0.0", async function () {
+      // since I have no NCT, I need to impersonate an account that has it
+      // I'll also give it some wei, just to be safe
+      await network.provider.request({
+        method: "hardhat_stopImpersonatingAccount",
+        params: [addresses.myAddress],
+      });
+      await network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: ["0xdab7f2bc9aa986d9759718203c9a76534894e900"],
+      });
+      await network.provider.send("hardhat_setBalance", [
+        "0xdab7f2bc9aa986d9759718203c9a76534894e900",
+        ethers.utils.parseEther("2.0").toHexString(),
+      ]);
+      const signer = await ethers.getSigner(
+        "0xdab7f2bc9aa986d9759718203c9a76534894e900"
+      );
+
+      // @ts-ignore
+      nct = new ethers.Contract(addresses.nctAddress, nctAbi.abi, owner);
+
+      await (
+        await nct
+          .connect(signer)
+          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .deposit(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .autoRedeem(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+      ).wait();
+
+      // expecting user's in-contract balance for NCT to be 0.0
       expect(
         ethers.utils.formatEther(
           await offsetHelper.balances(
@@ -243,7 +356,49 @@ describe("Offset Helper", function () {
           )
         )
       ).to.be.eql("0.0");
+    });
 
+    it("User's in-contract balance for TCO2s should be 1.0", async function () {
+      // since I have no NCT, I need to impersonate an account that has it
+      // I'll also give it some wei, just to be safe
+      await network.provider.request({
+        method: "hardhat_stopImpersonatingAccount",
+        params: [addresses.myAddress],
+      });
+      await network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: ["0xdab7f2bc9aa986d9759718203c9a76534894e900"],
+      });
+      await network.provider.send("hardhat_setBalance", [
+        "0xdab7f2bc9aa986d9759718203c9a76534894e900",
+        ethers.utils.parseEther("2.0").toHexString(),
+      ]);
+      const signer = await ethers.getSigner(
+        "0xdab7f2bc9aa986d9759718203c9a76534894e900"
+      );
+
+      // @ts-ignore
+      nct = new ethers.Contract(addresses.nctAddress, nctAbi.abi, owner);
+
+      await (
+        await nct
+          .connect(signer)
+          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .deposit(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .autoRedeem(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+      ).wait();
+
+      // expecting user's in-contract balance for TCO2s to be 1.0
       expect(
         ethers.utils.formatEther(
           await offsetHelper.tco2Balance(
@@ -251,6 +406,65 @@ describe("Offset Helper", function () {
           )
         )
       ).to.be.eql("1.0");
+    });
+
+    it("OffsetHelper contract should hold 1.0 TCO2s", async function () {
+      this.timeout(120000);
+
+      // since I have no NCT, I need to impersonate an account that has it
+      // I'll also give it some wei, just to be safe
+      await network.provider.request({
+        method: "hardhat_stopImpersonatingAccount",
+        params: [addresses.myAddress],
+      });
+      await network.provider.request({
+        method: "hardhat_impersonateAccount",
+        params: ["0xdab7f2bc9aa986d9759718203c9a76534894e900"],
+      });
+      await network.provider.send("hardhat_setBalance", [
+        "0xdab7f2bc9aa986d9759718203c9a76534894e900",
+        ethers.utils.parseEther("2.0").toHexString(),
+      ]);
+      const signer = await ethers.getSigner(
+        "0xdab7f2bc9aa986d9759718203c9a76534894e900"
+      );
+
+      // @ts-ignore
+      nct = new ethers.Contract(addresses.nctAddress, nctAbi.abi, owner);
+
+      await (
+        await nct
+          .connect(signer)
+          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .deposit(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .autoRedeem(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+      ).wait();
+
+      const scoredTCO2s = await nct.getScoredTCO2s();
+
+      let tokenContract: ToucanCarbonOffsets;
+      let totalTCO2sHeld = ethers.utils.parseEther("0.0");
+
+      await Promise.all(
+        scoredTCO2s.map(async (token) => {
+          // @ts-ignore
+          tokenContract = new ethers.Contract(token, tcoAbi.abi, owner);
+          const balance = await tokenContract.balanceOf(offsetHelper.address);
+          totalTCO2sHeld = totalTCO2sHeld.add(balance);
+        })
+      );
+
+      expect(ethers.utils.formatEther(totalTCO2sHeld)).to.be.eql("1.0");
     });
   });
 
@@ -301,6 +515,7 @@ describe("Offset Helper", function () {
           .autoRetire(ethers.utils.parseEther("1.0"), addresses.nctAddress)
       ).wait();
 
+      // I expect the user's in-contract TCO2 balance to be 0.0
       expect(
         ethers.utils.formatEther(
           await offsetHelper.tco2Balance(

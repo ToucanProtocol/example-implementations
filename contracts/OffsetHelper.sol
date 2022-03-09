@@ -154,8 +154,6 @@ contract OffsetHelper is OffsetHelperStorage {
         // Here is a link to the specific error from inside the safeTransferETH() method
         // https://github.com/sushiswap/sushiswap/blob/canary/contracts/uniswapv2/libraries/TransferHelper.sol#L27
 
-        // TODO also, the swap method will send unused MATIC to OffsetHelper instead of to the user, need to adapt for that
-
         // check eligibility of token to swap for
         require(isRedeemable(_toToken), "Can't swap for this token");
 
@@ -169,12 +167,9 @@ contract OffsetHelper is OffsetHelperStorage {
         path[2] = _toToken;
 
         // swap MATIC for tokens
-        routerSushi.swapETHForExactTokens{value: msg.value}(
-            _amount,
-            path,
-            address(this),
-            block.timestamp
-        );
+        uint256[] memory amounts = routerSushi.swapETHForExactTokens{
+            value: msg.value
+        }(_amount, path, address(this), block.timestamp);
 
         // update balances
         balances[msg.sender][path[2]] += _amount;
