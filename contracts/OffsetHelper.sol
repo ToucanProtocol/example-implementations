@@ -146,7 +146,15 @@ contract OffsetHelper is OffsetHelperStorage {
     // @notice needs to be provided a message value on client side
     function swap(address _toToken, uint256 _amount) public payable {
         // TODO for some reason it's failing to send back unused MATIC
-        // also, the swap method may send unused MATIC to OffsetHelper instead of to the user
+
+        // The issue happens in the swapETHForExactTokens() method of the sushi router, right here:
+        // https://github.com/sushiswap/sushiswap/blob/canary/contracts/uniswapv2/UniswapV2Router02.sol#L317
+        // when calling TransferHelper.safeTransferETH() to send back unused MATIC to the user
+
+        // Here is a link to the specific error from inside the safeTransferETH() method
+        // https://github.com/sushiswap/sushiswap/blob/canary/contracts/uniswapv2/libraries/TransferHelper.sol#L27
+
+        // TODO also, the swap method will send unused MATIC to OffsetHelper instead of to the user, need to adapt for that
 
         // check eligibility of token to swap for
         require(isRedeemable(_toToken), "Can't swap for this token");
