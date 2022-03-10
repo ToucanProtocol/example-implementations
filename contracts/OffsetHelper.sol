@@ -128,9 +128,10 @@ contract OffsetHelper is OffsetHelperStorage {
         path[2] = _toToken;
 
         // swap input token for pool token
+        uint256[] memory amountsIn = routerSushi.getAmountsIn(_amount, path);
         routerSushi.swapTokensForExactTokens(
             _amount,
-            (_amount * 10),
+            amountsIn[2],
             path,
             address(this),
             block.timestamp
