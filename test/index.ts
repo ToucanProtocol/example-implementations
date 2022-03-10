@@ -60,7 +60,16 @@ describe("Offset Helper", function () {
       "OffsetHelper",
       owner
     )) as OffsetHelper__factory;
-    offsetHelper = await offsetHelperFactory.deploy();
+    offsetHelper = await offsetHelperFactory.deploy(
+      ["BCT", "NCT", "USDC", "WETH", "WMATIC"],
+      [
+        addresses.bctAddress,
+        addresses.nctAddress,
+        addresses.usdcAddress,
+        addresses.wethAddress,
+        addresses.wmaticAddress,
+      ]
+    );
   });
 
   describe("swap()", function () {

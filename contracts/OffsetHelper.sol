@@ -12,27 +12,18 @@ import "./uniswapv2/IUniswapV2Router02.sol";
 contract OffsetHelper is OffsetHelperStorage {
     using SafeERC20 for IERC20;
 
-    constructor() {
-        // TODO make these be assigned dynamically through the constructor
-        eligibleTokenAddresses[
-            "BCT"
-        ] = 0x2F800Db0fdb5223b3C3f354886d907A671414A7F;
-
-        eligibleTokenAddresses[
-            "NCT"
-        ] = 0xD838290e877E0188a4A44700463419ED96c16107;
-
-        eligibleTokenAddresses[
-            "USDC"
-        ] = 0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174;
-
-        eligibleTokenAddresses[
-            "WETH"
-        ] = 0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619;
-
-        eligibleTokenAddresses[
-            "WMATIC"
-        ] = 0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270;
+    constructor(
+        string[] memory _eligibleTokenSymbols,
+        address[] memory _eligibleTokenAddresses
+    ) {
+        uint256 i = 0;
+        uint256 eligibleTokenSymbolsLen = _eligibleTokenSymbols.length;
+        while (i < eligibleTokenSymbolsLen) {
+            eligibleTokenAddresses[
+                _eligibleTokenSymbols[i]
+            ] = _eligibleTokenAddresses[i];
+            i += 1;
+        }
     }
 
     // @description this is the autoOffset method for when the user wants to input tokens like USDC, WETH, WMATIC
