@@ -195,9 +195,9 @@ describe("Offset Helper", function () {
     });
 
     it("Surplus MATIC should be sent to user", async function () {
-      const preSwapETHBalance = await owner.getBalance();
-
-      const expectedETHCost = parseEther("1.0");
+      const preSwapETHBalance = await offsetHelper.provider.getBalance(
+        offsetHelper.address
+      );
 
       await (
         await offsetHelper["swap(address,uint256)"](
@@ -209,13 +209,15 @@ describe("Offset Helper", function () {
         )
       ).wait();
 
-      const postSwapETHBalance = await owner.getBalance();
+      const postSwapETHBalance = await offsetHelper.provider.getBalance(
+        offsetHelper.address
+      );
 
       // I'm expecting that the OffsetHelper doesn't have extra MATIC
       // this check is done to ensure any surplus MATIC has been sent to the user, and not to OffsetHelper
       expect(formatEther(preSwapETHBalance)).to.be.eql(
         formatEther(postSwapETHBalance)
-      ); // TODO eth never gets sent back to user
+      );
     });
   });
 
