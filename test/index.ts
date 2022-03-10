@@ -186,12 +186,17 @@ describe("Offset Helper", function () {
     });
 
     it("Should swap MATIC for 1.0 NCT", async function () {
+      const maticToSend = await offsetHelper.howMuchETHShouldISendToSwap(
+        addresses.nctAddress,
+        parseEther("1.0")
+      );
+
       await (
         await offsetHelper["swap(address,uint256)"](
           addresses.nctAddress,
           parseEther("1.0"),
           {
-            value: parseEther("5.0"),
+            value: maticToSend,
           }
         )
       ).wait();
@@ -645,13 +650,17 @@ describe("Offset Helper", function () {
     });
 
     it("Should retire 1 TCO2 from MATIC", async function () {
+      const maticToSend = await offsetHelper.howMuchETHShouldISendToSwap(
+        addresses.nctAddress,
+        parseEther("1.0")
+      );
+
       await (
         await offsetHelper["autoOffset(address,uint256)"](
           addresses.nctAddress,
           parseEther("1.0"),
           {
-            // TODO there is the question of how much MATIC to send, but I think that should be calculated on the frontend by an SDK
-            value: parseEther("5.0"),
+            value: maticToSend,
           }
         )
       ).wait();

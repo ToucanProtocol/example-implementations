@@ -163,6 +163,26 @@ contract OffsetHelper is OffsetHelperStorage {
 
     // TODO I need a method that tells people how much MATIC to send for the below swap method
     // otherwise they'll just send random MATIC amounts until it works and that's not ok
+    function howMuchETHShouldISendToSwap(address _toToken, uint256 _amount)
+        public
+        view
+        returns (uint256)
+    {
+        // require token to be redeemable
+        require(isRedeemable(_toToken), "Can't swap for this token");
+
+        // instantiate sushi router
+        IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
+
+        // establish path;
+        // sushi router expects path[0] == WMATIC, but otherwise the path will resemble the one above
+        address[] memory path = new address[](3);
+        path[0] = eligibleTokenAddresses["WMATIC"];
+        path[1] = eligibleTokenAddresses["USDC"];
+        path[2] = _toToken;
+        uint256[] memory amounts = routerSushi.getAmountsIn(_amount, path);
+        return amounts[0];
+    }
 
     // @description uses SushiSwap to exchange MATIC for BCT / NCT
     // @param _toToken token to swap for (will be held within contract)
