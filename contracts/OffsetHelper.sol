@@ -147,13 +147,14 @@ contract OffsetHelper is OffsetHelperStorage {
 
     receive() external payable {}
 
+    // TODO I need a method that tells people how much MATIC to send for the below swap method
+    // otherwise they'll just send random MATIC amounts until it works and that's not ok
+
     // @description uses SushiSwap to exchange MATIC for BCT / NCT
     // @param _toToken token to swap for (will be held within contract)
     // @param _amount amount of NCT / BCT wanted
     // @notice needs to be provided a message value on client side
     function swap(address _toToken, uint256 _amount) public payable {
-        // TODO for some reason it's failing to send back unused MATIC
-
         // The issue happens in the swapETHForExactTokens() method of the sushi router, right here:
         // https://github.com/sushiswap/sushiswap/blob/canary/contracts/uniswapv2/UniswapV2Router02.sol#L317
         // when calling TransferHelper.safeTransferETH() to send back unused MATIC to the user
@@ -177,6 +178,14 @@ contract OffsetHelper is OffsetHelperStorage {
         uint256[] memory amounts = routerSushi.swapETHForExactTokens{
             value: msg.value
         }(_amount, path, address(this), block.timestamp);
+
+        if (msg.value > amounts[0]) {
+            uint256 leftoverETH = msg.value - amounts[0];
+            (bool success, ) = msg.sender.call{value: leftoverETH}(
+                new bytes(0)
+            );
+            require(success, "Failed to send dust ETH back to user.");
+        }
 
         // update balances
         balances[msg.sender][path[2]] += _amount;
