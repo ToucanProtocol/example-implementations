@@ -207,9 +207,16 @@ contract OffsetHelper is OffsetHelperStorage {
 
     // TODO interfaces folder + exchange CO2KEN_contracts for interfaces
 
-    // TODO do we want this contract to be upgradeable?
+    // @description allow users to withdraw tokens they have deposited
+    function withdraw(address _erc20Addr, uint256 _amount) public {
+        require(
+            balances[msg.sender][_erc20Addr] >= _amount,
+            "You don't have enough to withdraw."
+        );
 
-    // TODO a method to withdraw
+        IERC20(_erc20Addr).transfer(msg.sender, _amount);
+        balances[msg.sender][_erc20Addr] -= _amount;
+    }
 
     // @description allow people to deposit BCT / NCT
     // @notice needs to be approved
@@ -242,6 +249,7 @@ contract OffsetHelper is OffsetHelperStorage {
 
             // update TCO2 balances of the user to reflect the redeeming
             tco2Balance[msg.sender] += _amount;
+            // TODO maybe I should also update a normal token balance? but then how can I reset it to 0 when I retire?
         }
     }
 
