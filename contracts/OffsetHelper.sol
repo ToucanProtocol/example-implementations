@@ -141,6 +141,12 @@ contract OffsetHelper is OffsetHelperStorage {
         balances[msg.sender][path[2]] += _amount;
     }
 
+    // apparently I need a fallback and a receive method to fix the situation where transfering dust MATIC
+    // in the MATIC to token swap fails
+    fallback() external payable {}
+
+    receive() external payable {}
+
     // @description uses SushiSwap to exchange MATIC for BCT / NCT
     // @param _toToken token to swap for (will be held within contract)
     // @param _amount amount of NCT / BCT wanted
