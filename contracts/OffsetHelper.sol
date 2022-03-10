@@ -191,6 +191,12 @@ contract OffsetHelper is OffsetHelperStorage {
         balances[msg.sender][path[2]] += _amount;
     }
 
+    // TODO interfaces folder + exchange CO2KEN_contracts for interfaces
+
+    // TODO do we want this contract to be upgradeable?
+
+    // TODO a method to withdraw
+
     // @description allow people to deposit BCT / NCT
     // @notice needs to be approved
     function deposit(address _erc20Addr, uint256 _amount) public {

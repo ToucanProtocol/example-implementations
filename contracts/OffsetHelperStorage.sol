@@ -23,6 +23,7 @@ contract OffsetHelperStorage is OwnableUpgradeable {
     mapping(address => uint256) public overallOffsetAmount;
 
     constructor() {
+        // TODO make these be assigned dynamically through the constructor
         eligibleTokenAddresses[
             "BCT"
         ] = 0x2F800Db0fdb5223b3C3f354886d907A671414A7F;
