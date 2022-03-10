@@ -161,8 +161,10 @@ contract OffsetHelper is OffsetHelperStorage {
 
     receive() external payable {}
 
-    // TODO I need a method that tells people how much MATIC to send for the below swap method
-    // otherwise they'll just send random MATIC amounts until it works and that's not ok
+    // @description tells user how much ETH/MATIC is required to swap for an amount of specified tokens
+    // @param _toToken token to swap for (should be NCT or BCT)
+    // @param _amount amount of NCT / BCT wanted
+    // @returns uint256 representing the required ETH / MATIC to get the amount of NCT / BCT
     function howMuchETHShouldISendToSwap(address _toToken, uint256 _amount)
         public
         view
@@ -180,6 +182,8 @@ contract OffsetHelper is OffsetHelperStorage {
         path[0] = eligibleTokenAddresses["WMATIC"];
         path[1] = eligibleTokenAddresses["USDC"];
         path[2] = _toToken;
+
+        // get and return the amount needed to send to get the mentioned tokens
         uint256[] memory amounts = routerSushi.getAmountsIn(_amount, path);
         return amounts[0];
     }
