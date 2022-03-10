@@ -11,7 +11,12 @@ import {
   OffsetHelper__factory,
   ToucanCarbonOffsets,
 } from "../typechain";
-import { FormatTypes, Interface } from "ethers/lib/utils";
+import {
+  formatEther,
+  FormatTypes,
+  Interface,
+  parseEther,
+} from "ethers/lib/utils";
 import { BigNumber } from "ethers";
 
 const addresses: any = {
@@ -44,7 +49,7 @@ describe("Offset Helper", function () {
       });
       await network.provider.send("hardhat_setBalance", [
         addresses.myAddress,
-        ethers.utils.parseEther("8.0").toHexString(), // for some reason it only works with small amounts
+        parseEther("8.0").toHexString(), // for some reason it only works with small amounts
       ]);
     }
 
@@ -72,7 +77,7 @@ describe("Offset Helper", function () {
       });
       await network.provider.send("hardhat_setBalance", [
         "0xdc9232e2df177d7a12fdff6ecbab114e2231198d",
-        ethers.utils.parseEther("2.0").toHexString(),
+        parseEther("2.0").toHexString(),
       ]);
       const signer = await ethers.getSigner(
         "0xdc9232e2df177d7a12fdff6ecbab114e2231198d"
@@ -93,7 +98,7 @@ describe("Offset Helper", function () {
       await (
         await weth
           .connect(signer)
-          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+          .approve(offsetHelper.address, parseEther("1.0"))
       ).wait();
 
       await (
@@ -102,16 +107,14 @@ describe("Offset Helper", function () {
           ["swap(address,address,uint256)"](
             addresses.wethAddress,
             addresses.nctAddress,
-            ethers.utils.parseEther("1.0")
+            parseEther("1.0")
           )
       ).wait();
 
       // I expect the offsetHelper will have 1 extra NCT in its balance
       const balance = await nct.balanceOf(offsetHelper.address);
-      expect(ethers.utils.formatEther(balance)).to.be.eql(
-        ethers.utils.formatEther(
-          initialBalance.add(ethers.utils.parseEther("1.0"))
-        )
+      expect(formatEther(balance)).to.be.eql(
+        formatEther(initialBalance.add(parseEther("1.0")))
       );
     });
 
@@ -128,7 +131,7 @@ describe("Offset Helper", function () {
       });
       await network.provider.send("hardhat_setBalance", [
         "0xdc9232e2df177d7a12fdff6ecbab114e2231198d",
-        ethers.utils.parseEther("2.0").toHexString(),
+        parseEther("2.0").toHexString(),
       ]);
       const signer = await ethers.getSigner(
         "0xdc9232e2df177d7a12fdff6ecbab114e2231198d"
@@ -149,7 +152,7 @@ describe("Offset Helper", function () {
       await (
         await weth
           .connect(signer)
-          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+          .approve(offsetHelper.address, parseEther("1.0"))
       ).wait();
 
       await (
@@ -158,13 +161,13 @@ describe("Offset Helper", function () {
           ["swap(address,address,uint256)"](
             addresses.wethAddress,
             addresses.nctAddress,
-            ethers.utils.parseEther("1.0")
+            parseEther("1.0")
           )
       ).wait();
 
       // I expect that the user should have his in-contract balance for NCT to be 1.0
       expect(
-        ethers.utils.formatEther(
+        formatEther(
           await offsetHelper.balances(
             "0xdc9232e2df177d7a12fdff6ecbab114e2231198d",
             addresses.nctAddress
@@ -177,9 +180,9 @@ describe("Offset Helper", function () {
       await (
         await offsetHelper["swap(address,uint256)"](
           addresses.nctAddress,
-          ethers.utils.parseEther("1.0"),
+          parseEther("1.0"),
           {
-            value: ethers.utils.parseEther("5.0"),
+            value: parseEther("5.0"),
           }
         )
       ).wait();
@@ -188,18 +191,20 @@ describe("Offset Helper", function () {
       nct = new ethers.Contract(addresses.nctAddress, nctAbi.abi, owner);
 
       const balance = await nct.balanceOf(offsetHelper.address);
-      expect(ethers.utils.formatEther(balance)).to.be.eql("1.0");
+      expect(formatEther(balance)).to.be.eql("1.0");
     });
 
     it("Surplus MATIC should be sent to user", async function () {
       const preSwapETHBalance = await owner.getBalance();
 
+      const expectedETHCost = parseEther("1.0");
+
       await (
         await offsetHelper["swap(address,uint256)"](
           addresses.nctAddress,
-          ethers.utils.parseEther("1.0"),
+          parseEther("1.0"),
           {
-            value: ethers.utils.parseEther("5.0"),
+            value: parseEther("5.0"),
           }
         )
       ).wait();
@@ -208,9 +213,9 @@ describe("Offset Helper", function () {
 
       // I'm expecting that the OffsetHelper doesn't have extra MATIC
       // this check is done to ensure any surplus MATIC has been sent to the user, and not to OffsetHelper
-      expect(ethers.utils.formatEther(preSwapETHBalance)).to.be.eql(
-        ethers.utils.formatEther(postSwapETHBalance)
-      );
+      expect(formatEther(preSwapETHBalance)).to.be.eql(
+        formatEther(postSwapETHBalance)
+      ); // TODO eth never gets sent back to user
     });
   });
 
@@ -228,7 +233,7 @@ describe("Offset Helper", function () {
       });
       await network.provider.send("hardhat_setBalance", [
         "0xdab7f2bc9aa986d9759718203c9a76534894e900",
-        ethers.utils.parseEther("2.0").toHexString(),
+        parseEther("2.0").toHexString(),
       ]);
       const signer = await ethers.getSigner(
         "0xdab7f2bc9aa986d9759718203c9a76534894e900"
@@ -240,17 +245,17 @@ describe("Offset Helper", function () {
       await (
         await nct
           .connect(signer)
-          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+          .approve(offsetHelper.address, parseEther("1.0"))
       ).wait();
 
       await (
         await offsetHelper
           .connect(signer)
-          .deposit(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+          .deposit(addresses.nctAddress, parseEther("1.0"))
       ).wait();
 
       expect(
-        ethers.utils.formatEther(
+        formatEther(
           await offsetHelper.balances(
             "0xdab7f2bc9aa986d9759718203c9a76534894e900",
             addresses.nctAddress
@@ -274,7 +279,7 @@ describe("Offset Helper", function () {
       });
       await network.provider.send("hardhat_setBalance", [
         "0xdab7f2bc9aa986d9759718203c9a76534894e900",
-        ethers.utils.parseEther("2.0").toHexString(),
+        parseEther("2.0").toHexString(),
       ]);
       const signer = await ethers.getSigner(
         "0xdab7f2bc9aa986d9759718203c9a76534894e900"
@@ -286,25 +291,25 @@ describe("Offset Helper", function () {
       await (
         await nct
           .connect(signer)
-          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+          .approve(offsetHelper.address, parseEther("1.0"))
       ).wait();
 
       await (
         await offsetHelper
           .connect(signer)
-          .deposit(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+          .deposit(addresses.nctAddress, parseEther("1.0"))
       ).wait();
 
       await (
         await offsetHelper
           .connect(signer)
-          .autoRedeem(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+          .autoRedeem(addresses.nctAddress, parseEther("1.0"))
       ).wait();
 
       // expecting offsetHelper to have 0.0 NCT
-      expect(
-        ethers.utils.formatEther(await nct.balanceOf(offsetHelper.address))
-      ).to.be.eql("0.0");
+      expect(formatEther(await nct.balanceOf(offsetHelper.address))).to.be.eql(
+        "0.0"
+      );
     });
 
     it("User's in-contract balance for NCT should be 0.0", async function () {
@@ -320,7 +325,7 @@ describe("Offset Helper", function () {
       });
       await network.provider.send("hardhat_setBalance", [
         "0xdab7f2bc9aa986d9759718203c9a76534894e900",
-        ethers.utils.parseEther("2.0").toHexString(),
+        parseEther("2.0").toHexString(),
       ]);
       const signer = await ethers.getSigner(
         "0xdab7f2bc9aa986d9759718203c9a76534894e900"
@@ -332,24 +337,24 @@ describe("Offset Helper", function () {
       await (
         await nct
           .connect(signer)
-          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+          .approve(offsetHelper.address, parseEther("1.0"))
       ).wait();
 
       await (
         await offsetHelper
           .connect(signer)
-          .deposit(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+          .deposit(addresses.nctAddress, parseEther("1.0"))
       ).wait();
 
       await (
         await offsetHelper
           .connect(signer)
-          .autoRedeem(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+          .autoRedeem(addresses.nctAddress, parseEther("1.0"))
       ).wait();
 
       // expecting user's in-contract balance for NCT to be 0.0
       expect(
-        ethers.utils.formatEther(
+        formatEther(
           await offsetHelper.balances(
             "0xdab7f2bc9aa986d9759718203c9a76534894e900",
             addresses.nctAddress
@@ -371,7 +376,7 @@ describe("Offset Helper", function () {
       });
       await network.provider.send("hardhat_setBalance", [
         "0xdab7f2bc9aa986d9759718203c9a76534894e900",
-        ethers.utils.parseEther("2.0").toHexString(),
+        parseEther("2.0").toHexString(),
       ]);
       const signer = await ethers.getSigner(
         "0xdab7f2bc9aa986d9759718203c9a76534894e900"
@@ -383,24 +388,24 @@ describe("Offset Helper", function () {
       await (
         await nct
           .connect(signer)
-          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+          .approve(offsetHelper.address, parseEther("1.0"))
       ).wait();
 
       await (
         await offsetHelper
           .connect(signer)
-          .deposit(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+          .deposit(addresses.nctAddress, parseEther("1.0"))
       ).wait();
 
       await (
         await offsetHelper
           .connect(signer)
-          .autoRedeem(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+          .autoRedeem(addresses.nctAddress, parseEther("1.0"))
       ).wait();
 
       // expecting user's in-contract balance for TCO2s to be 1.0
       expect(
-        ethers.utils.formatEther(
+        formatEther(
           await offsetHelper.tco2Balance(
             "0xdab7f2bc9aa986d9759718203c9a76534894e900"
           )
@@ -423,7 +428,7 @@ describe("Offset Helper", function () {
       });
       await network.provider.send("hardhat_setBalance", [
         "0xdab7f2bc9aa986d9759718203c9a76534894e900",
-        ethers.utils.parseEther("2.0").toHexString(),
+        parseEther("2.0").toHexString(),
       ]);
       const signer = await ethers.getSigner(
         "0xdab7f2bc9aa986d9759718203c9a76534894e900"
@@ -435,25 +440,25 @@ describe("Offset Helper", function () {
       await (
         await nct
           .connect(signer)
-          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+          .approve(offsetHelper.address, parseEther("1.0"))
       ).wait();
 
       await (
         await offsetHelper
           .connect(signer)
-          .deposit(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+          .deposit(addresses.nctAddress, parseEther("1.0"))
       ).wait();
 
       await (
         await offsetHelper
           .connect(signer)
-          .autoRedeem(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+          .autoRedeem(addresses.nctAddress, parseEther("1.0"))
       ).wait();
 
       const scoredTCO2s = await nct.getScoredTCO2s();
 
       let tokenContract: ToucanCarbonOffsets;
-      let totalTCO2sHeld = ethers.utils.parseEther("0.0");
+      let totalTCO2sHeld = parseEther("0.0");
 
       await Promise.all(
         scoredTCO2s.map(async (token) => {
@@ -464,7 +469,7 @@ describe("Offset Helper", function () {
         })
       );
 
-      expect(ethers.utils.formatEther(totalTCO2sHeld)).to.be.eql("1.0");
+      expect(formatEther(totalTCO2sHeld)).to.be.eql("1.0");
     });
   });
 
@@ -482,7 +487,7 @@ describe("Offset Helper", function () {
       });
       await network.provider.send("hardhat_setBalance", [
         "0xdab7f2bc9aa986d9759718203c9a76534894e900",
-        ethers.utils.parseEther("2.0").toHexString(),
+        parseEther("2.0").toHexString(),
       ]);
       const signer = await ethers.getSigner(
         "0xdab7f2bc9aa986d9759718203c9a76534894e900"
@@ -494,30 +499,30 @@ describe("Offset Helper", function () {
       await (
         await nct
           .connect(signer)
-          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+          .approve(offsetHelper.address, parseEther("1.0"))
       ).wait();
 
       await (
         await offsetHelper
           .connect(signer)
-          .deposit(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+          .deposit(addresses.nctAddress, parseEther("1.0"))
       ).wait();
 
       await (
         await offsetHelper
           .connect(signer)
-          .autoRedeem(addresses.nctAddress, ethers.utils.parseEther("1.0"))
+          .autoRedeem(addresses.nctAddress, parseEther("1.0"))
       ).wait();
 
       await (
         await offsetHelper
           .connect(signer)
-          .autoRetire(ethers.utils.parseEther("1.0"), addresses.nctAddress)
+          .autoRetire(parseEther("1.0"), addresses.nctAddress)
       ).wait();
 
       // I expect the user's in-contract TCO2 balance to be 0.0
       expect(
-        ethers.utils.formatEther(
+        formatEther(
           await offsetHelper.tco2Balance(
             "0xdab7f2bc9aa986d9759718203c9a76534894e900"
           )
@@ -540,7 +545,7 @@ describe("Offset Helper", function () {
       });
       await network.provider.send("hardhat_setBalance", [
         "0xdc9232e2df177d7a12fdff6ecbab114e2231198d",
-        ethers.utils.parseEther("2.0").toHexString(),
+        parseEther("2.0").toHexString(),
       ]);
       const signer = await ethers.getSigner(
         "0xdc9232e2df177d7a12fdff6ecbab114e2231198d"
@@ -556,7 +561,7 @@ describe("Offset Helper", function () {
       await (
         await weth
           .connect(signer)
-          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+          .approve(offsetHelper.address, parseEther("1.0"))
       ).wait();
 
       await (
@@ -565,13 +570,13 @@ describe("Offset Helper", function () {
           ["autoOffset(address,address,uint256)"](
             addresses.wethAddress,
             addresses.nctAddress,
-            ethers.utils.parseEther("1.0")
+            parseEther("1.0")
           )
       ).wait();
 
       // TODO there should be a better more accurate way to test this, like maybe finding the total TCO2 supply
       expect(
-        ethers.utils.formatEther(
+        formatEther(
           await offsetHelper.tco2Balance(
             "0xdc9232e2df177d7a12fdff6ecbab114e2231198d"
           )
@@ -583,19 +588,17 @@ describe("Offset Helper", function () {
       await (
         await offsetHelper["autoOffset(address,uint256)"](
           addresses.nctAddress,
-          ethers.utils.parseEther("1.0"),
+          parseEther("1.0"),
           {
             // TODO there is the question of how much MATIC to send, but I think that should be calculated on the frontend by an SDK
-            value: ethers.utils.parseEther("5.0"),
+            value: parseEther("5.0"),
           }
         )
       ).wait();
 
       // TODO there should be a better more accurate way to test this, like maybe finding the total TCO2 supply
       expect(
-        ethers.utils.formatEther(
-          await offsetHelper.tco2Balance(addresses.myAddress)
-        )
+        formatEther(await offsetHelper.tco2Balance(addresses.myAddress))
       ).to.be.eql("0.0");
     });
 
@@ -612,7 +615,7 @@ describe("Offset Helper", function () {
       });
       await network.provider.send("hardhat_setBalance", [
         "0xdab7f2bc9aa986d9759718203c9a76534894e900",
-        ethers.utils.parseEther("2.0").toHexString(),
+        parseEther("2.0").toHexString(),
       ]);
       const signer = await ethers.getSigner(
         "0xdab7f2bc9aa986d9759718203c9a76534894e900"
@@ -624,7 +627,7 @@ describe("Offset Helper", function () {
       await (
         await nct
           .connect(signer)
-          .approve(offsetHelper.address, ethers.utils.parseEther("1.0"))
+          .approve(offsetHelper.address, parseEther("1.0"))
       ).wait();
 
       await (
@@ -632,13 +635,13 @@ describe("Offset Helper", function () {
           .connect(signer)
           .autoOffsetUsingRedeemableToken(
             addresses.nctAddress,
-            ethers.utils.parseEther("1.0")
+            parseEther("1.0")
           )
       ).wait();
 
       // TODO there should be a better more accurate way to test this, like maybe finding the total TCO2 supply
       expect(
-        ethers.utils.formatEther(
+        formatEther(
           await offsetHelper.tco2Balance(
             "0xdab7f2bc9aa986d9759718203c9a76534894e900"
           )
