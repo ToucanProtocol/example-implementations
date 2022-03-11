@@ -5,20 +5,20 @@
 // If you encounter a vulnerability or an issue, please contact <security@toucan.earth> or visit security.toucan.earth
 pragma solidity ^0.8.0;
 
-import 'hardhat/console.sol'; // dev & testing
-import '@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol';
-import '@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol';
-import '@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol';
-import '@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol';
+import "hardhat/console.sol"; // dev & testing
+import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/token/ERC20/ERC20Upgradeable.sol";
+import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@openzeppelin/contracts-upgradeable/access/OwnableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/utils/ContextUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/security/PausableUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
+import "@openzeppelin/contracts-upgradeable/access/AccessControlUpgradeable.sol";
 
-import './../IToucanContractRegistry.sol';
-import './../ICarbonOffsetBatches.sol';
-import './../ToucanCarbonOffsets.sol';
-import './BaseCarbonTonneStorage.sol';
+import "./../IToucanContractRegistry.sol";
+import "./../ICarbonOffsetBatches.sol";
+import "./../ToucanCarbonOffsets.sol";
+import "./BaseCarbonTonneStorage.sol";
 
 /// @notice Base Carbon Tonne for KlimaDAO
 /// Contract is an ERC20 compliant token that acts as a pool for TCO2 tokens
@@ -49,7 +49,7 @@ contract BaseCarbonTonne is
         __Context_init_unchained();
         __Ownable_init_unchained();
         __Pausable_init_unchained();
-        __ERC20_init_unchained('Toucan Protocol: Base Carbon Tonne', 'BCT');
+        __ERC20_init_unchained("Toucan Protocol: Base Carbon Tonne", "BCT");
         setMinimumVintageStartTime(_minimumVintageStartTime);
         _setupRole(DEFAULT_ADMIN_ROLE, msg.sender);
     }
@@ -69,7 +69,7 @@ contract BaseCarbonTonne is
     modifier onlyPausers() {
         require(
             hasRole(PAUSER_ROLE, msg.sender) || owner() == msg.sender,
-            'Caller is not authorized'
+            "Caller is not authorized"
         );
         _;
     }
@@ -102,15 +102,15 @@ contract BaseCarbonTonne is
         virtual
         onlyOwner
     {
-        if (strcmp(_mappingName, 'regions')) {
+        if (strcmp(_mappingName, "regions")) {
             accepted
                 ? regionsIsAcceptedMapping = true
                 : regionsIsAcceptedMapping = false;
-        } else if (strcmp(_mappingName, 'standards')) {
+        } else if (strcmp(_mappingName, "standards")) {
             accepted
                 ? standardsIsAcceptedMapping = true
                 : standardsIsAcceptedMapping = false;
-        } else if (strcmp(_mappingName, 'methodologies')) {
+        } else if (strcmp(_mappingName, "methodologies")) {
             accepted
                 ? methodologiesIsAcceptedMapping = true
                 : methodologiesIsAcceptedMapping = false;
@@ -268,10 +268,10 @@ contract BaseCarbonTonne is
         virtual
         whenNotPaused
     {
-        require(checkEligible(erc20Addr), 'Token rejected');
+        require(checkEligible(erc20Addr), "Token rejected");
 
         uint256 remainingSpace = getRemaining();
-        require(remainingSpace > 0, 'Error: Cannot deposit, Pool is full');
+        require(remainingSpace > 0, "Error: Cannot deposit, Pool is full");
 
         if (amount > remainingSpace) amount = remainingSpace;
 
@@ -301,19 +301,19 @@ contract BaseCarbonTonne is
 
             require(
                 internalBlackList[erc20Addr] == false,
-                'Error: TCO2 token contract blacklisted'
+                "Error: TCO2 token contract blacklisted"
             );
 
             require(
                 checkAttributeMatching(erc20Addr) == true,
-                'Error: TCO2 token contract rejected, non-matching attributes'
+                "Error: TCO2 token contract rejected, non-matching attributes"
             );
         }
         // If not Toucan native contract, check if address is whitelisted
         else {
             require(
                 externalWhiteList[erc20Addr] == true,
-                'Error: External carbon credit token not whitelisted'
+                "Error: External carbon credit token not whitelisted"
             );
             return true;
         }
@@ -341,16 +341,16 @@ contract BaseCarbonTonne is
         );
         require(
             regions[projectData.region] == regionsIsAcceptedMapping,
-            'Project region failed acceptance test'
+            "Project region failed acceptance test"
         );
         require(
             standards[projectData.standard] == standardsIsAcceptedMapping,
-            'Project standard failed acceptance test'
+            "Project standard failed acceptance test"
         );
         require(
             methodologies[projectData.methodology] ==
                 methodologiesIsAcceptedMapping,
-            'Project methodology failed acceptance test'
+            "Project methodology failed acceptance test"
         );
 
         return true;
@@ -366,7 +366,7 @@ contract BaseCarbonTonne is
     {
         uint256 addrLen = erc20s.length;
         uint256 amountsLen = amounts.length;
-        require(addrLen == amountsLen, 'Error: Length of arrays not matching');
+        require(addrLen == amountsLen, "Error: Length of arrays not matching");
 
         for (uint256 i = 0; i < addrLen; i++) {
             redeemSingle(msg.sender, erc20s[i], amounts[i]);
@@ -379,10 +379,10 @@ contract BaseCarbonTonne is
         address erc20,
         uint256 amount
     ) internal virtual whenNotPaused {
-        require(msg.sender == account, 'Only own funds can be redeemed');
+        require(msg.sender == account, "Only own funds can be redeemed");
         require(
             tokenBalances[erc20] >= amount,
-            'Cannot redeem more than is stored in contract'
+            "Cannot redeem more than is stored in contract"
         );
         _burn(account, amount);
         tokenBalances[erc20] -= amount;
@@ -402,7 +402,7 @@ contract BaseCarbonTonne is
     ) internal virtual override {
         super._beforeTokenTransfer(from, to, amount);
 
-        require(!paused(), 'ERC20Pausable: token transfer while paused');
+        require(!paused(), "ERC20Pausable: token transfer while paused");
     }
 
     /// @dev Returns the remaining space in pool before hitting the cap
