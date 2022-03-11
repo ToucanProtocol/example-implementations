@@ -314,7 +314,7 @@ describe("Offset Helper - autoRedeem", function () {
       ]);
 
       // @ts-ignore
-      Bct = new ethers.Contract(addresses.bct, bctContract.abi, owner);
+      bct = new ethers.Contract(addresses.bct, bctContract.abi, owner);
 
       await (
         await bct
