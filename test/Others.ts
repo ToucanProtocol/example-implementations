@@ -2,6 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import * as hardhatContracts from "../utils/toucanContracts.json";
+import * as bctContract from "../artifacts/contracts/CO2KEN_contracts/pools/BaseCarbonTonne.sol/BaseCarbonTonne.json";
 import {
   BaseCarbonTonne,
   NatureCarbonTonne,
@@ -206,6 +207,44 @@ describe("Offset Helper - Others", function () {
       await expect(
         offsetHelper.connect(signer).withdraw(addresses.nct, parseEther("2.0"))
       ).to.be.revertedWith("You don't have enough to withdraw.");
+    });
+
+    it("Should deposit 1.0 BCT", async function () {
+      // since I have no BCT, I need to impersonate an account that has it
+      // I'll also give it some wei, just to be safe
+      const addressToImpersonate = "0xCef2D0c7d89C3Dcc7a8E8AF561b0294BCD6e9EBD";
+      const signer = await impersonateAccount(
+        addresses.myAddress,
+        addressToImpersonate
+      );
+      await network.provider.send("hardhat_setBalance", [
+        addressToImpersonate,
+        parseEther("2.0").toHexString(),
+      ]);
+
+      // @ts-ignore
+      bct = new ethers.Contract(addresses.bct, bctContract.abi, owner);
+
+      await (
+        await bct
+          .connect(signer)
+          .approve(offsetHelper.address, parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .deposit(addresses.bct, parseEther("1.0"))
+      ).wait();
+
+      expect(
+        formatEther(
+          await offsetHelper.balances(
+            "0xCef2D0c7d89C3Dcc7a8E8AF561b0294BCD6e9EBD",
+            addresses.bct
+          )
+        )
+      ).to.be.eql("1.0");
     });
   });
 });
