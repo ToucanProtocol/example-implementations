@@ -3,6 +3,7 @@ import { BigNumber } from "ethers";
 import { ethers, network } from "hardhat";
 import { parseEther } from "ethers/lib/utils";
 import {
+  BaseCarbonTonne,
   NatureCarbonTonne,
   OffsetHelper,
   ToucanCarbonOffsets,
@@ -10,11 +11,12 @@ import {
 import * as tcoAbi from "../artifacts/contracts/CO2KEN_contracts/ToucanCarbonOffsets.sol/ToucanCarbonOffsets.json";
 
 const getTotalTCO2sHeld = async (
-  nct: NatureCarbonTonne,
+  pooltoken: NatureCarbonTonne | BaseCarbonTonne,
   offsetHelper: OffsetHelper,
   owner: SignerWithAddress
 ): Promise<BigNumber> => {
-  const scoredTCO2s = await nct.getScoredTCO2s();
+  // @ts-ignore TODO we're ignoring this until BCT gets this method
+  const scoredTCO2s = await pooltoken.getScoredTCO2s();
 
   let tokenContract: ToucanCarbonOffsets;
   let totalTCO2sHeld = parseEther("0.0");
