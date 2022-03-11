@@ -266,7 +266,6 @@ contract OffsetHelper is OffsetHelperStorage {
 
             // update TCO2 balances of the user to reflect the redeeming
             tco2Balance[msg.sender] += _amount;
-            // TODO maybe I should also update a normal token balance? but then how can I reset it to 0 when I retire?
         }
     }
 
