@@ -1,0 +1,36 @@
+name: Deploy contract
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    strategy:
+      matrix:
+        node-version: [14.x]
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Use Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v2
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Install packages
+        run: npm i
+
+      - name: Build contracts
+        run: npx hardhat compile
+
+#      - name: Test contract
+#        run: npx hardhat test
+
+#      - name: Deploy contract
+#        run: npx hardhat run ./scripts/deploy
