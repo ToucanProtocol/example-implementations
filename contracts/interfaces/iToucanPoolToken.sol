@@ -7,4 +7,6 @@ interface IToucanPoolToken {
 
     function redeemMany(address[] memory erc20s, uint256[] memory amounts)
         external;
+
+    function getScoredTCO2s() external view returns (address[] memory);
 }

@@ -6,6 +6,8 @@ import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "./OffsetHelperStorage.sol";
 import "./interfaces/IToucanPoolToken.sol";
 import "./interfaces/IUniswapV2Router02.sol";
+import "./interfaces/IToucanCarbonOffsets.sol";
+import "./interfaces/IToucanContractRegistry.sol";
 
 contract OffsetHelper is OffsetHelperStorage {
     using SafeERC20 for IERC20;
@@ -220,8 +222,6 @@ contract OffsetHelper is OffsetHelperStorage {
         balances[msg.sender][path[2]] += _amount;
     }
 
-    // TODO interfaces folder + exchange CO2KEN_contracts for interfaces
-
     // @description allow users to withdraw tokens they have deposited
     function withdraw(address _erc20Addr, uint256 _amount) public {
         require(
@@ -249,22 +249,20 @@ contract OffsetHelper is OffsetHelperStorage {
     function autoRedeem(address _fromToken, uint256 _amount) public {
         require(isRedeemable(_fromToken), "Can't redeem this token.");
 
-        if (_fromToken == eligibleTokenAddresses["NCT"]) {
-            require(
-                balances[msg.sender][_fromToken] >= _amount,
-                "You haven't deposited enough NCT"
-            );
+        require(
+            balances[msg.sender][_fromToken] >= _amount,
+            "You haven't deposited enough NCT / BCT"
+        );
 
-            // instantiate NCT
-            IToucanPoolToken NCTImplementation = IToucanPoolToken(_fromToken);
+        // instantiate pool token (NCT or BCT)
+        IToucanPoolToken PoolTokenImplementation = IToucanPoolToken(_fromToken);
 
-            // auto redeem NCT for TCO2; will transfer automatically picked TCO2 to this contract
-            NCTImplementation.redeemAuto(_amount);
-            balances[msg.sender][_fromToken] -= _amount;
+        // auto redeem NCT for TCO2; will transfer automatically picked TCO2 to this contract
+        PoolTokenImplementation.redeemAuto(_amount);
+        balances[msg.sender][_fromToken] -= _amount;
 
-            // update TCO2 balances of the user to reflect the redeeming
-            tco2Balance[msg.sender] += _amount;
-        }
+        // update TCO2 balances of the user to reflect the redeeming
+        tco2Balance[msg.sender] += _amount;
     }
 
     // @param _amount the amount of TCO2 to retire
@@ -276,35 +274,33 @@ contract OffsetHelper is OffsetHelperStorage {
             "You don't have enough TCO2 in this contract."
         );
 
-        if (_pool == eligibleTokenAddresses["NCT"]) {
-            // instantiate NCT
-            IToucanPoolToken NCTImplementation = IToucanPoolToken(_pool);
+        // instantiate pool token (NCT or BCT)
+        IToucanPoolToken PoolTokenImplementation = IToucanPoolToken(_pool);
 
-            // I'm attempting to loop over all possible TCO2s that the contract could have
-            // see the contract's balance for said TCO2
-            // and retire until the whole amount has been retired
-            uint256 remainingAmount = _amount;
-            uint256 i = 0;
-            address[] memory scoredTCO2s = NCTImplementation.getScoredTCO2s();
-            uint256 scoredTCO2Len = scoredTCO2s.length;
-            while (remainingAmount > 0 && i < scoredTCO2Len) {
-                address tco2 = scoredTCO2s[i];
-                uint256 balance = IERC20(tco2).balanceOf(address(this));
-                i += 1;
-                if (balance == 0) continue;
-                uint256 amountToRetire = remainingAmount > balance
-                    ? balance
-                    : remainingAmount;
-                IToucanCarbonOffsets(tco2).retire(amountToRetire);
-                remainingAmount -= amountToRetire;
-            }
-
-            // update the user's TCO2 balance
-            tco2Balance[msg.sender] -= _amount;
-
-            // record how much user has offset (will be useful in minting the NFT for user)
-            overallOffsetAmount[msg.sender] += _amount;
+        // I'm attempting to loop over all possible TCO2s that the contract could have
+        // see the contract's balance for said TCO2
+        // and retire until the whole amount has been retired
+        uint256 remainingAmount = _amount;
+        uint256 i = 0;
+        address[] memory scoredTCO2s = PoolTokenImplementation.getScoredTCO2s();
+        uint256 scoredTCO2Len = scoredTCO2s.length;
+        while (remainingAmount > 0 && i < scoredTCO2Len) {
+            address tco2 = scoredTCO2s[i];
+            uint256 balance = IERC20(tco2).balanceOf(address(this));
+            i += 1;
+            if (balance == 0) continue;
+            uint256 amountToRetire = remainingAmount > balance
+                ? balance
+                : remainingAmount;
+            IToucanCarbonOffsets(tco2).retire(amountToRetire);
+            remainingAmount -= amountToRetire;
         }
+
+        // update the user's TCO2 balance
+        tco2Balance[msg.sender] -= _amount;
+
+        // record how much user has offset (will be useful in minting the NFT for user)
+        overallOffsetAmount[msg.sender] += _amount;
     }
 
     // @description mints NFT for all the TCO2 the user has offset through this contract
