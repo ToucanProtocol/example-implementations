@@ -305,6 +305,7 @@ contract OffsetHelper is OffsetHelperStorage {
 
     // @description mints NFT for all the TCO2 the user has offset through this contract
     function mintNFT() public {
+        // TODO
         // require the user has overallOffsetAmount > 0
         // mint NFT
         // reset overallOffsetAmount for user to 0
