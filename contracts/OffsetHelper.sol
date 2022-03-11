@@ -3,11 +3,9 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "./CO2KEN_contracts/ToucanCarbonOffsets.sol";
-import "./CO2KEN_contracts/pools/BaseCarbonTonne.sol";
-import "./CO2KEN_contracts/pools/NCT.sol";
 import "./OffsetHelperStorage.sol";
-import "./uniswapv2/IUniswapV2Router02.sol";
+import "./interfaces/IToucanPoolToken.sol";
+import "./interfaces/IUniswapV2Router02.sol";
 
 contract OffsetHelper is OffsetHelperStorage {
     using SafeERC20 for IERC20;
@@ -258,7 +256,7 @@ contract OffsetHelper is OffsetHelperStorage {
             );
 
             // instantiate NCT
-            NatureCarbonTonne NCTImplementation = NatureCarbonTonne(_fromToken);
+            IToucanPoolToken NCTImplementation = IToucanPoolToken(_fromToken);
 
             // auto redeem NCT for TCO2; will transfer automatically picked TCO2 to this contract
             NCTImplementation.redeemAuto(_amount);
@@ -280,7 +278,7 @@ contract OffsetHelper is OffsetHelperStorage {
 
         if (_pool == eligibleTokenAddresses["NCT"]) {
             // instantiate NCT
-            NatureCarbonTonne NCTImplementation = NatureCarbonTonne(_pool);
+            IToucanPoolToken NCTImplementation = IToucanPoolToken(_pool);
 
             // I'm attempting to loop over all possible TCO2s that the contract could have
             // see the contract's balance for said TCO2
@@ -297,7 +295,7 @@ contract OffsetHelper is OffsetHelperStorage {
                 uint256 amountToRetire = remainingAmount > balance
                     ? balance
                     : remainingAmount;
-                ToucanCarbonOffsets(tco2).retire(amountToRetire);
+                IToucanCarbonOffsets(tco2).retire(amountToRetire);
                 remainingAmount -= amountToRetire;
             }
 
