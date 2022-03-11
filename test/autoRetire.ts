@@ -2,6 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import * as hardhatContracts from "../utils/toucanContracts.json";
+import * as bctContract from "../artifacts/contracts/CO2KEN_contracts/pools/BaseCarbonTonne.sol/BaseCarbonTonne.json";
 import {
   BaseCarbonTonne,
   NatureCarbonTonne,
@@ -64,7 +65,7 @@ describe("Offset Helper - autoRetire", function () {
     );
   });
 
-  describe("autoRetire()", function () {
+  describe("autoRetire() using NCT", function () {
     it("User's in-contract TCO2 balance should be 0.0 - manual offset", async function () {
       // since I have no NCT, I need to impersonate an account that has it
       // I'll also give it some wei, just to be safe
@@ -172,6 +173,103 @@ describe("Offset Helper - autoRetire", function () {
       await expect(
         offsetHelper.autoRetire(parseEther("1.0"), addresses.nct)
       ).to.be.revertedWith("You don't have enough TCO2 in this contract.");
+    });
+  });
+
+  describe("autoRetire() using BCT", async function () {
+    it("User's in-contract TCO2 balance should be 0.0 - manual offset, using BCT", async function () {
+      // since I have no BCT, I need to impersonate an account that has it
+      // I'll also give it some wei, just to be safe
+      const addressToImpersonate = "0xCef2D0c7d89C3Dcc7a8E8AF561b0294BCD6e9EBD";
+      const signer = await impersonateAccount(
+        addresses.myAddress,
+        addressToImpersonate
+      );
+      await network.provider.send("hardhat_setBalance", [
+        addressToImpersonate,
+        parseEther("2.0").toHexString(),
+      ]);
+
+      // @ts-ignore
+      bct = new ethers.Contract(addresses.bct, bctContract.abi, owner);
+
+      await (
+        await bct
+          .connect(signer)
+          .approve(offsetHelper.address, parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .deposit(addresses.bct, parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .autoRedeem(addresses.bct, parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .autoRetire(parseEther("1.0"), addresses.bct)
+      ).wait();
+
+      // I expect the user's in-contract TCO2 balance to be 0.0
+      expect(
+        formatEther(
+          await offsetHelper.tco2Balance(
+            "0xCef2D0c7d89C3Dcc7a8E8AF561b0294BCD6e9EBD"
+          )
+        )
+      ).to.be.eql("0.0");
+    });
+
+    it("OffsetHelpers's TCO2 balances should be 0.0 - manual offset, using BCT", async function () {
+      // since I have no BCT, I need to impersonate an account that has it
+      // I'll also give it some wei, just to be safe
+      const addressToImpersonate = "0xCef2D0c7d89C3Dcc7a8E8AF561b0294BCD6e9EBD";
+      const signer = await impersonateAccount(
+        addresses.myAddress,
+        addressToImpersonate
+      );
+      await network.provider.send("hardhat_setBalance", [
+        addressToImpersonate,
+        parseEther("2.0").toHexString(),
+      ]);
+
+      // @ts-ignore
+      bct = new ethers.Contract(addresses.bct, bctContract.abi, owner);
+
+      await (
+        await bct
+          .connect(signer)
+          .approve(offsetHelper.address, parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .deposit(addresses.bct, parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .autoRedeem(addresses.bct, parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .autoRetire(parseEther("1.0"), addresses.bct)
+      ).wait();
+
+      const totalTCO2sHeld = await getTotalTCO2sHeld(bct, offsetHelper, owner);
+
+      expect(formatEther(totalTCO2sHeld)).to.be.eql("0.0");
     });
   });
 });

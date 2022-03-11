@@ -2,6 +2,7 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import * as hardhatContracts from "../utils/toucanContracts.json";
+import * as bctContract from "../artifacts/contracts/CO2KEN_contracts/pools/BaseCarbonTonne.sol/BaseCarbonTonne.json";
 import {
   BaseCarbonTonne,
   NatureCarbonTonne,
@@ -64,7 +65,7 @@ describe("Offset Helper - autoOffset", function () {
     );
   });
 
-  describe("autoOffset()", function () {
+  describe("autoOffset() using NCT", function () {
     it("User's in-contract TCO2 balance should be 0.0 - offset from WETH", async function () {
       // since I have no WETH, I need to impersonate an account that has it
       // I'll also give it some wei just to be safe
@@ -264,7 +265,7 @@ describe("Offset Helper - autoOffset", function () {
       // @ts-ignore
       nct = new ethers.Contract(
         addresses.nct,
-        hardhatContracts.contracts.BaseCarbonTonne.abi,
+        hardhatContracts.contracts.NatureCarbonTonne.abi,
         owner
       );
 
@@ -284,8 +285,10 @@ describe("Offset Helper - autoOffset", function () {
 
       expect(formatEther(totalTCO2sHeld)).to.be.eql("0.0");
     });
+  });
 
-    it("User's in-contract TCO2 balance should be 0.0 - offset from WETH, using BCT", async function () {
+  describe("autoOffset() using BCT", async function () {
+    it("User's in-contract TCO2 balance should be 0.0 - offset from WETH", async function () {
       // since I have no WETH, I need to impersonate an account that has it
       // I'll also give it some wei just to be safe
       const addressToImpersonate = "0xdc9232e2df177d7a12fdff6ecbab114e2231198d";
@@ -330,7 +333,7 @@ describe("Offset Helper - autoOffset", function () {
       ).to.be.eql("0.0");
     });
 
-    it("OffsetHelpers's TCO2 balances should be 0.0 - offset from WETH, using BCT", async function () {
+    it("OffsetHelpers's TCO2 balances should be 0.0 - offset from WETH", async function () {
       // since I have no WETH, I need to impersonate an account that has it
       // I'll also give it some wei just to be safe
       const addressToImpersonate = "0xdc9232e2df177d7a12fdff6ecbab114e2231198d";
@@ -367,11 +370,7 @@ describe("Offset Helper - autoOffset", function () {
       ).wait();
 
       // @ts-ignore
-      bct = new ethers.Contract(
-        addresses.bct,
-        hardhatContracts.contracts.BaseCarbonTonne.abi,
-        owner
-      );
+      bct = new ethers.Contract(addresses.bct, bctContract.abi, owner);
 
       const totalTCO2sHeld = await getTotalTCO2sHeld(bct, offsetHelper, owner);
 
