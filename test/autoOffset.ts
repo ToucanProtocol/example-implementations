@@ -1,9 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
-import * as tcoAbi from "../artifacts/contracts/CO2KEN_contracts/ToucanCarbonOffsets.sol/ToucanCarbonOffsets.json";
-import * as bctAbi from "../artifacts/contracts/CO2KEN_contracts/pools/BaseCarbonTonne.sol/BaseCarbonTonne.json";
-import * as nctAbi from "../artifacts/contracts/CO2KEN_contracts/pools/NCT.sol/NatureCarbonTonne.json";
+import * as hardhatContracts from "../utils/toucanContracts.json";
 import {
   BaseCarbonTonne,
   NatureCarbonTonne,
@@ -149,7 +147,11 @@ describe("Offset Helper - autoOffset", function () {
       ).wait();
 
       // @ts-ignore
-      nct = new ethers.Contract(addresses.nct, nctAbi.abi, owner);
+      nct = new ethers.Contract(
+        addresses.nct,
+        hardhatContracts.contracts.NatureCarbonTonne.abi,
+        owner
+      );
 
       const totalTCO2sHeld = await getTotalTCO2sHeld(nct, offsetHelper, owner);
 
@@ -194,7 +196,11 @@ describe("Offset Helper - autoOffset", function () {
       ).wait();
 
       // @ts-ignore
-      nct = new ethers.Contract(addresses.nct, nctAbi.abi, owner);
+      nct = new ethers.Contract(
+        addresses.nct,
+        hardhatContracts.contracts.NatureCarbonTonne.abi,
+        owner
+      );
 
       const totalTCO2sHeld = await getTotalTCO2sHeld(nct, offsetHelper, owner);
 
@@ -215,7 +221,11 @@ describe("Offset Helper - autoOffset", function () {
       ]);
 
       // @ts-ignore
-      nct = new ethers.Contract(addresses.nct, nctAbi.abi, owner);
+      nct = new ethers.Contract(
+        addresses.nct,
+        hardhatContracts.contracts.NatureCarbonTonne.abi,
+        owner
+      );
 
       await (
         await nct
@@ -252,7 +262,11 @@ describe("Offset Helper - autoOffset", function () {
       ]);
 
       // @ts-ignore
-      nct = new ethers.Contract(addresses.nct, nctAbi.abi, owner);
+      nct = new ethers.Contract(
+        addresses.nct,
+        hardhatContracts.contracts.BaseCarbonTonne.abi,
+        owner
+      );
 
       await (
         await nct
@@ -353,7 +367,11 @@ describe("Offset Helper - autoOffset", function () {
       ).wait();
 
       // @ts-ignore
-      bct = new ethers.Contract(addresses.bct, bctAbi.abi, owner);
+      bct = new ethers.Contract(
+        addresses.bct,
+        hardhatContracts.contracts.BaseCarbonTonne.abi,
+        owner
+      );
 
       const totalTCO2sHeld = await getTotalTCO2sHeld(bct, offsetHelper, owner);
 

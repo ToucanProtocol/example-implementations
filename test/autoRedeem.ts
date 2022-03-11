@@ -1,9 +1,7 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
-import * as tcoAbi from "../artifacts/contracts/CO2KEN_contracts/ToucanCarbonOffsets.sol/ToucanCarbonOffsets.json";
-import * as bctAbi from "../artifacts/contracts/CO2KEN_contracts/pools/BaseCarbonTonne.sol/BaseCarbonTonne.json";
-import * as nctAbi from "../artifacts/contracts/CO2KEN_contracts/pools/NCT.sol/NatureCarbonTonne.json";
+import * as hardhatContracts from "../utils/toucanContracts.json";
 import {
   BaseCarbonTonne,
   NatureCarbonTonne,
@@ -81,7 +79,11 @@ describe("Offset Helper - autoRedeem", function () {
       ]);
 
       // @ts-ignore
-      nct = new ethers.Contract(addresses.nct, nctAbi.abi, owner);
+      nct = new ethers.Contract(
+        addresses.nct,
+        hardhatContracts.contracts.NatureCarbonTonne.abi,
+        owner
+      );
 
       await (
         await nct
@@ -121,7 +123,11 @@ describe("Offset Helper - autoRedeem", function () {
       ]);
 
       // @ts-ignore
-      nct = new ethers.Contract(addresses.nct, nctAbi.abi, owner);
+      nct = new ethers.Contract(
+        addresses.nct,
+        hardhatContracts.contracts.NatureCarbonTonne.abi,
+        owner
+      );
 
       await (
         await nct
@@ -166,7 +172,11 @@ describe("Offset Helper - autoRedeem", function () {
       ]);
 
       // @ts-ignore
-      nct = new ethers.Contract(addresses.nct, nctAbi.abi, owner);
+      nct = new ethers.Contract(
+        addresses.nct,
+        hardhatContracts.contracts.NatureCarbonTonne.abi,
+        owner
+      );
 
       await (
         await nct
@@ -212,7 +222,11 @@ describe("Offset Helper - autoRedeem", function () {
       ]);
 
       // @ts-ignore
-      nct = new ethers.Contract(addresses.nct, nctAbi.abi, owner);
+      nct = new ethers.Contract(
+        addresses.nct,
+        hardhatContracts.contracts.NatureCarbonTonne.abi,
+        owner
+      );
 
       await (
         await nct
