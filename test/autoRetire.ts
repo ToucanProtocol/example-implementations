@@ -161,5 +161,11 @@ describe("Offset Helper - autoRetire", function () {
 
       expect(formatEther(totalTCO2sHeld)).to.be.eql("0.0");
     });
+
+    it("Should fail cause I don't have enough TCO2 in-contract", async function () {
+      await expect(
+        offsetHelper.autoRetire(parseEther("1.0"), addresses.nct)
+      ).to.be.revertedWith("You don't have enough TCO2 in this contract.");
+    });
   });
 });

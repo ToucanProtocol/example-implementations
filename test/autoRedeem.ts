@@ -236,5 +236,11 @@ describe("Offset Helper - autoRedeem", function () {
 
       expect(formatEther(totalTCO2sHeld)).to.be.eql("1.0");
     });
+
+    it("Should fail cause I haven't deposited enough NCT", async function () {
+      await expect(
+        offsetHelper.autoRedeem(addresses.nct, parseEther("1.0"))
+      ).to.be.revertedWith("You haven't deposited enough NCT");
+    });
   });
 });

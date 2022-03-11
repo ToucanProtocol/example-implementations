@@ -105,6 +105,17 @@ describe("Offset Helper - Others", function () {
       ).to.be.eql("1.0");
     });
 
+    it("Should fail to deposit cause I have no NCT", async function () {
+      // @ts-ignore
+      nct = new ethers.Contract(addresses.nct, nctAbi.abi, owner);
+
+      await (await nct.approve(offsetHelper.address, parseEther("1.0"))).wait();
+
+      await expect(
+        offsetHelper.deposit(addresses.nct, parseEther("1.0"))
+      ).to.be.revertedWith("ERC20: transfer amount exceeds balance");
+    });
+
     it("Should deposit and withdraw 1.0 NCT", async function () {
       // since I have no NCT, I need to impersonate an account that has it
       // I'll also give it some wei, just to be safe
@@ -146,6 +157,41 @@ describe("Offset Helper - Others", function () {
       expect(formatEther(postWithdrawNCTBalance)).to.be.eql(
         formatEther(preDepositNCTBalance)
       );
+    });
+
+    it("Should fail to withdraw cause I haven't deposited enough NCT", async function () {
+      // since I have no NCT, I need to impersonate an account that has it
+      // I'll also give it some wei, just to be safe
+      const addressToImpersonate = "0xdab7f2bc9aa986d9759718203c9a76534894e900";
+      const signer = await impersonateAccount(
+        addresses.myAddress,
+        addressToImpersonate
+      );
+      await network.provider.send("hardhat_setBalance", [
+        addressToImpersonate,
+        parseEther("2.0").toHexString(),
+      ]);
+
+      // @ts-ignore
+      nct = new ethers.Contract(addresses.nct, nctAbi.abi, owner);
+
+      const preDepositNCTBalance = await nct.balanceOf(signer.address);
+
+      await (
+        await nct
+          .connect(signer)
+          .approve(offsetHelper.address, parseEther("1.0"))
+      ).wait();
+
+      await (
+        await offsetHelper
+          .connect(signer)
+          .deposit(addresses.nct, parseEther("1.0"))
+      ).wait();
+
+      await expect(
+        offsetHelper.connect(signer).withdraw(addresses.nct, parseEther("2.0"))
+      ).to.be.revertedWith("You don't have enough to withdraw.");
     });
   });
 });
