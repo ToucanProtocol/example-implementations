@@ -31,5 +31,5 @@ jobs:
 
       # - name: Test contract
       #   run: npx hardhat test
-#      - name: Deploy contract
-#        run: npx hardhat run ./scripts/deploy
+      # - name: Deploy contract
+      #   run: npx hardhat run ./scripts/deploy
