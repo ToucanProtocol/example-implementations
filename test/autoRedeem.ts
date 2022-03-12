@@ -208,8 +208,6 @@ describe("Offset Helper - autoRedeem", function () {
     });
 
     it("OffsetHelper contract should hold 1.0 TCO2s", async function () {
-      this.timeout(120000);
-
       // since I have no NCT, I need to impersonate an account that has it
       // I'll also give it some wei, just to be safe
       const addressToImpersonate = "0xdab7f2bc9aa986d9759718203c9a76534894e900";
@@ -390,8 +388,6 @@ describe("Offset Helper - autoRedeem", function () {
     });
 
     it("OffsetHelper contract should hold 1.0 TCO2s", async function () {
-      this.timeout(120000);
-
       // since I have no BCT, I need to impersonate an account that has it
       // I'll also give it some wei, just to be safe
       const addressToImpersonate = "0xCef2D0c7d89C3Dcc7a8E8AF561b0294BCD6e9EBD";
