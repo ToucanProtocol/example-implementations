@@ -15,7 +15,6 @@ const getTotalTCO2sHeld = async (
   offsetHelper: OffsetHelper,
   owner: SignerWithAddress
 ): Promise<BigNumber> => {
-  // @ts-ignore TODO we're ignoring this until BCT gets this method
   const scoredTCO2s = await pooltoken.getScoredTCO2s();
 
   let tokenContract: ToucanCarbonOffsets;
