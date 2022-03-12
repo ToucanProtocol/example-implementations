@@ -29,8 +29,8 @@ jobs:
       - name: Build contracts
         run: npx hardhat compile
 
-#      - name: Test contract
-#        run: npx hardhat test
+     - name: Test contract
+       run: npx hardhat test
 
 #      - name: Deploy contract
 #        run: npx hardhat run ./scripts/deploy
