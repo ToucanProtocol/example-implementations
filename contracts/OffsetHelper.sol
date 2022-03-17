@@ -28,55 +28,55 @@ contract OffsetHelper is OffsetHelperStorage {
 
     // @description this is the autoOffset method for when the user wants to input tokens like USDC, WETH, WMATIC
     // @param _depositedToken the address of the token that the user sends (could be USDC, WETH, WMATIC)
-    // @param _carbonToken the pool that the user wants to use (could be NCT or BCT)
+    // @param _poolToken the pool that the user wants to use (could be NCT or BCT)
     // @param _amountToOffset the amount of TCO2 to offset
     function autoOffset(
         address _depositedToken,
-        address _carbonToken,
+        address _poolToken,
         uint256 _amountToOffset
     ) public {
         // swap input token for BCT / NCT
-        swap(_depositedToken, _carbonToken, _amountToOffset);
+        swap(_depositedToken, _poolToken, _amountToOffset);
 
         // redeem BCT / NCT for TCO2s
-        autoRedeem(_carbonToken, _amountToOffset);
+        autoRedeem(_poolToken, _amountToOffset);
 
         // retire the TCO2s to achieve offset
-        autoRetire(_amountToOffset, _carbonToken);
+        autoRetire(_amountToOffset, _poolToken);
     }
 
     // @description this is the autoOffset method for when the user wants to input MATIC
-    // @param _carbonToken the pool that the user wants to use (could be NCT or BCT)
+    // @param _poolToken the pool that the user wants to use (could be NCT or BCT)
     // @param _amountToOffset the amount of TCO2 to offset
-    function autoOffset(address _carbonToken, uint256 _amountToOffset)
+    function autoOffset(address _poolToken, uint256 _amountToOffset)
         public
         payable
     {
         // swap MATIC for BCT / NCT
-        swap(_carbonToken, _amountToOffset);
+        swap(_poolToken, _amountToOffset);
 
         // redeem BCT / NCT for TCO2s
-        autoRedeem(_carbonToken, _amountToOffset);
+        autoRedeem(_poolToken, _amountToOffset);
 
         // retire the TCO2s to achieve offset
-        autoRetire(_amountToOffset, _carbonToken);
+        autoRetire(_amountToOffset, _poolToken);
     }
 
     // @description this is the autoOffset method for when the user already has and wants to input BCT / NCT
-    // @param _depositedToken the pool token that the user wants to use (could be NCT or BCT)
+    // @param _poolToken the pool token that the user wants to use (could be NCT or BCT)
     // @param _amountToOffset the amount of TCO2 to offset
-    function autoOffsetUsingRedeemableToken(
-        address _depositedToken,
+    function autoOffsetUsingPoolToken(
+        address _poolToken,
         uint256 _amountToOffset
     ) public {
         // deposit pool token from user to this contract
-        deposit(_depositedToken, _amountToOffset);
+        deposit(_poolToken, _amountToOffset);
 
         // redeem BCT / NCT for TCO2s
-        autoRedeem(_depositedToken, _amountToOffset);
+        autoRedeem(_poolToken, _amountToOffset);
 
         // retire the TCO2s to achieve offset
-        autoRetire(_amountToOffset, _depositedToken);
+        autoRetire(_amountToOffset, _poolToken);
     }
 
     // checks address and returns if can be used at all by the contract

@@ -237,7 +237,7 @@ describe("Offset Helper - autoOffset", function () {
       await (
         await offsetHelper
           .connect(signer)
-          .autoOffsetUsingRedeemableToken(addresses.nct, parseEther("1.0"))
+          .autoOffsetUsingPoolToken(addresses.nct, parseEther("1.0"))
       ).wait();
 
       expect(
@@ -278,7 +278,7 @@ describe("Offset Helper - autoOffset", function () {
       await (
         await offsetHelper
           .connect(signer)
-          .autoOffsetUsingRedeemableToken(addresses.nct, parseEther("1.0"))
+          .autoOffsetUsingPoolToken(addresses.nct, parseEther("1.0"))
       ).wait();
 
       const totalTCO2sHeld = await getTotalTCO2sHeld(nct, offsetHelper, owner);
