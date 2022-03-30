@@ -287,13 +287,15 @@ contract OffsetHelper is OffsetHelperStorage {
         while (remainingAmount > 0 && i < scoredTCO2Len) {
             address tco2 = scoredTCO2s[i];
             uint256 balance = IERC20(tco2).balanceOf(address(this));
-            i += 1;
-            if (balance == 0) continue;
+            if (balance < 1e15) continue;
             uint256 amountToRetire = remainingAmount > balance
                 ? balance
                 : remainingAmount;
             IToucanCarbonOffsets(tco2).retire(amountToRetire);
             remainingAmount -= amountToRetire;
+            unchecked {
+                ++i;
+            }
         }
 
         // update the user's TCO2 balance
