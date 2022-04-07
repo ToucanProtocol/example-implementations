@@ -6,7 +6,7 @@ typechain
 
 #Hardhat files
 cache
-artifacts
+/artifacts
 
 #IDE files
 .idea
