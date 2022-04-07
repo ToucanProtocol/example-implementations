@@ -3,7 +3,7 @@ import { BigNumber } from "ethers";
 import { ethers } from "hardhat";
 import { parseEther } from "ethers/lib/utils";
 import { OffsetHelper } from "../typechain";
-import { IToucanPoolToken, ToucanCarbonOffsets } from "../typechain";
+import { IToucanPoolToken, IToucanCarbonOffsets } from "../typechain";
 import * as tcoContract from "../artifacts/contracts/interfaces/IToucanCarbonOffsets.sol/IToucanCarbonOffsets.json";
 
 const getTotalTCO2sHeld = async (
@@ -13,7 +13,7 @@ const getTotalTCO2sHeld = async (
 ): Promise<BigNumber> => {
   const scoredTCO2s = await pooltoken.getScoredTCO2s();
 
-  let tokenContract: ToucanCarbonOffsets;
+  let tokenContract: IToucanCarbonOffsets;
   let totalTCO2sHeld = parseEther("0.0");
 
   await Promise.all(
