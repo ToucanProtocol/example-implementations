@@ -1,6 +1,6 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { BigNumber } from "ethers";
-import { ethers, network } from "hardhat";
+import { ethers } from "hardhat";
 import { parseEther } from "ethers/lib/utils";
 import { OffsetHelper } from "../typechain";
 import { IToucanPoolToken, ToucanCarbonOffsets } from "../typechain";

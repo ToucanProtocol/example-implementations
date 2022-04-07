@@ -9,13 +9,7 @@ import {
   OffsetHelper,
   OffsetHelper__factory,
 } from "../typechain";
-import {
-  formatEther,
-  FormatTypes,
-  Interface,
-  parseEther,
-} from "ethers/lib/utils";
-import { BigNumber } from "ethers";
+import { formatEther, parseEther } from "ethers/lib/utils";
 import addresses from "../utils/addresses";
 import getTotalTCO2sHeld from "../utils/getTotalTCO2sHeld";
 import impersonateAccount from "../utils/impersonateAccount";
