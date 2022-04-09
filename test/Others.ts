@@ -2,30 +2,22 @@ import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
 import * as hardhatContracts from "../utils/toucanContracts.json";
-import * as bctContract from "../artifacts/contracts/CO2KEN_contracts/pools/BaseCarbonTonne.sol/BaseCarbonTonne.json";
+import * as poolContract from "../artifacts/contracts/interfaces/IToucanPoolToken.sol/IToucanPoolToken.json";
 import {
-  BaseCarbonTonne,
-  NatureCarbonTonne,
+  IToucanCarbonOffsets,
+  IToucanPoolToken,
   OffsetHelper,
   OffsetHelper__factory,
-  ToucanCarbonOffsets,
 } from "../typechain";
-import {
-  formatEther,
-  FormatTypes,
-  Interface,
-  parseEther,
-} from "ethers/lib/utils";
-import { BigNumber } from "ethers";
+import { formatEther, parseEther } from "ethers/lib/utils";
 import addresses from "../utils/addresses";
-import getTotalTCO2sHeld from "../utils/getTotalTCO2sHeld";
 import impersonateAccount from "../utils/impersonateAccount";
 
 describe("Offset Helper - Others", function () {
   let offsetHelper: OffsetHelper;
-  let tco: ToucanCarbonOffsets;
-  let bct: BaseCarbonTonne;
-  let nct: NatureCarbonTonne;
+  let tco: IToucanCarbonOffsets;
+  let bct: IToucanPoolToken;
+  let nct: IToucanPoolToken;
   let owner: SignerWithAddress;
   let addr1: SignerWithAddress;
   let addr2: SignerWithAddress;
@@ -223,7 +215,7 @@ describe("Offset Helper - Others", function () {
       ]);
 
       // @ts-ignore
-      bct = new ethers.Contract(addresses.bct, bctContract.abi, owner);
+      bct = new ethers.Contract(addresses.bct, poolContract.abi, owner);
 
       await (
         await bct
