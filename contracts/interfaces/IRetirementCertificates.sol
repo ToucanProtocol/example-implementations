@@ -14,8 +14,6 @@ import "@openzeppelin/contracts-upgradeable/proxy/utils/UUPSUpgradeable.sol";
 import "./IToucanContractRegistry.sol";
 
 interface RetirementCertificates is IERC721Upgradeable {
-    function version() external returns (string memory);
-
     /// @dev Returns the Uniform Resource Identifier (URI) for `tokenId` token.
     function tokenURI(uint256 tokenId) external returns (string memory);
 

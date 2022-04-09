@@ -8,8 +8,6 @@ pragma solidity ^0.8.0;
 import "@openzeppelin/contracts-upgradeable/token/ERC20/IERC20Upgradeable.sol";
 
 interface IToucanPoolToken is IERC20Upgradeable {
-    function version() external pure returns (string memory);
-
     function deposit(address erc20Addr, uint256 amount) external;
 
     function checkEligible(address erc20Addr) external view returns (bool);

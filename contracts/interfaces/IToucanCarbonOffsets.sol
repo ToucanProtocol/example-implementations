@@ -12,8 +12,6 @@ import "../types/CarbonProjectTypes.sol";
 import "../types/CarbonProjectVintageTypes.sol";
 
 interface IToucanCarbonOffsets is IERC20Upgradeable, IERC721Receiver {
-    function version() external pure returns (string memory);
-
     function getGlobalProjectVintageIdentifiers()
         external
         view
