@@ -43,7 +43,7 @@ git checkout main && git pull --ff-only upstream main
 Cmd+shift+. to copy your issue number from linear, and use it as your branch name:
 
 ```bash
-git checkout -b co2-190-small-edits-on-the-home-page upstream/master
+git checkout -b co2-190-small-edits-on-the-home-page
 ```
 
 To open a PR push to your fork and open your PR to `CO2ken/example-implementations`.
