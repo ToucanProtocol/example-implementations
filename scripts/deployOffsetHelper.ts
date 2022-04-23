@@ -1,10 +1,11 @@
 import { ethers } from "hardhat";
 import addresses from "../utils/addresses";
+import tokens from "../utils/tokens";
 
 async function main() {
   const OffsetHelper = await ethers.getContractFactory("OffsetHelper");
   const oh = await OffsetHelper.deploy(
-    ["BCT", "NCT", "USDC", "WETH", "WMATIC"],
+    tokens,
     [
       addresses.bct,
       addresses.nct,
