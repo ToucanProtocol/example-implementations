@@ -1,5 +1,5 @@
 import addresses from "./addresses";
-import tokens from "./tokens";
+import { tokens } from "./tokens";
 
 module.exports = [
   tokens,
