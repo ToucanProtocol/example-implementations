@@ -16,4 +16,13 @@ const addresses: IfcAddresses = {
   wmatic: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
 };
 
+export const mumbaiAddresses: IfcAddresses = {
+  myAddress: "0x721F6f7A29b99CbdE1F18C4AA7D7AEb31eb2923B",
+  bct: "0xf2438A14f668b1bbA53408346288f3d7C71c10a1",
+  nct: "0x7beCBA11618Ca63Ead5605DE235f6dD3b25c530E",
+  usdc: "0xe6b8a5CF854791412c1f6EFC7CAf629f5Df1c747",
+  weth: "0xA6FA4fB5f76172d178d61B04b0ecd319C5d1C0aa",
+  wmatic: "0x9c3C9283D3e44854697Cd22D3Faa240Cfb032889",
+};
+
 export default addresses;
