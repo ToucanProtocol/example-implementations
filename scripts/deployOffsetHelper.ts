@@ -1,23 +1,30 @@
-import { ethers } from "hardhat";
-import addresses from "../utils/addresses";
-import tokens from "../utils/tokens";
+import { ethers, network } from "hardhat";
+import addresses, { mumbaiAddresses } from "../utils/addresses";
+import { tokens } from "../utils/tokens";
 
 async function main() {
   const OffsetHelper = await ethers.getContractFactory("OffsetHelper");
-  const oh = await OffsetHelper.deploy(
-    tokens,
-    [
+  if (network.name === "mumbai") {
+    const oh = await OffsetHelper.deploy(tokens, [
+      mumbaiAddresses.bct,
+      mumbaiAddresses.nct,
+      mumbaiAddresses.usdc,
+      mumbaiAddresses.weth,
+      mumbaiAddresses.wmatic,
+    ]);
+    console.log("OffsetHelper deployed on Mumbai to:", oh.address);
+    await oh.deployed();
+  } else {
+    const oh = await OffsetHelper.deploy(tokens, [
       addresses.bct,
       addresses.nct,
       addresses.usdc,
       addresses.weth,
       addresses.wmatic,
-    ]
-  );
-
-  await oh.deployed();
-
-  console.log("OffsetHelper deployed to:", oh.address);
+    ]);
+    console.log("OffsetHelper deployed on Polygon to:", oh.address);
+    await oh.deployed();
+  }
 }
 
 main().catch((error) => {
