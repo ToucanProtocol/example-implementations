@@ -9,6 +9,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    environment: env
 
     strategy:
       matrix:
@@ -29,7 +30,12 @@ jobs:
       - name: Build contracts
         run: npx hardhat compile
 
-      # - name: Test contract
-      #   run: npx hardhat test
+      - name: Test contract
+        run: npx hardhat test
+        env:
+          POLYGON_URL: ${{ secrets.POLYGON_URL }}
+          POLYGON_PRIVATE_KEY: ${{ secrets.POLYGON_PRIVATE_KEY }}
+          POLYGONSCAN_API_KEY: ${{ secrets.POLYGONSCAN_API_KEY }}
+
       # - name: Deploy contract
       #   run: npx hardhat run ./scripts/deploy
