@@ -56,10 +56,7 @@ const config: HardhatUserConfig = {
     timeout: 150000,
   },
   etherscan: {
-    apiKey: {
-      polygonMumbai: process.env.MUMBAI_POLYGONSCAN_KEY,
-      polygon: process.env.POLYGONSCAN_KEY,
-    },
+    apiKey: process.env.POLYGONSCAN_API_KEY || "",
   },
 };
 
