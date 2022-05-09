@@ -1,26 +1,25 @@
 import { SignerWithAddress } from "@nomiclabs/hardhat-ethers/signers";
 import { expect } from "chai";
 import { ethers, network } from "hardhat";
-import * as hardhatContracts from "../utils/toucanContracts.json";
-import * as poolContract from "../artifacts/contracts/interfaces/IToucanPoolToken.sol/IToucanPoolToken.json";
-import {
-  IToucanCarbonOffsets,
-  IToucanPoolToken,
-  OffsetHelper,
-  OffsetHelper__factory,
-} from "../typechain";
 import {
   formatEther,
   FormatTypes,
   Interface,
   parseEther,
 } from "ethers/lib/utils";
+
+import * as hardhatContracts from "../utils/toucanContracts.json";
+import * as poolContract from "../artifacts/contracts/interfaces/IToucanPoolToken.sol/IToucanPoolToken.json";
+import {
+  IToucanPoolToken,
+  OffsetHelper,
+  OffsetHelper__factory,
+} from "../typechain";
 import addresses from "../utils/addresses";
 import impersonateAccount from "../utils/impersonateAccount";
 
 describe("Offset Helper - swap", function () {
   let offsetHelper: OffsetHelper;
-  let tco: IToucanCarbonOffsets;
   let bct: IToucanPoolToken;
   let nct: IToucanPoolToken;
   let owner: SignerWithAddress;

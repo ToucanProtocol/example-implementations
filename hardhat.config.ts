@@ -47,7 +47,7 @@ const config: HardhatUserConfig = {
     hardhat: {
       forking: {
         url:
-          process.env.POLYGON_URL || "https://matic-mainnet.chainstacklabs.com",
+          process.env.POLYGON_URL || "",
         blockNumber: 25848203,
       },
     },
