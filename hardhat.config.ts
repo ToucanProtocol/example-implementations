@@ -30,14 +30,15 @@ const config: HardhatUserConfig = {
   },
   networks: {
     polygon: {
-      url: process.env.POLYGON_URL || "",
+      url:
+        process.env.POLYGON_URL || "https://matic-mainnet.chainstacklabs.com",
       accounts:
         process.env.POLYGON_PRIVATE_KEY !== undefined
           ? [process.env.POLYGON_PRIVATE_KEY]
           : [],
     },
     mumbai: {
-      url: process.env.MUMBAI_URL || "",
+      url: process.env.MUMBAI_URL || "https://matic-mumbai.chainstacklabs.com",
       accounts:
         process.env.MUMBAI_PRIVATE_KEY !== undefined
           ? [process.env.MUMBAI_PRIVATE_KEY]
@@ -45,7 +46,8 @@ const config: HardhatUserConfig = {
     },
     hardhat: {
       forking: {
-        url: process.env.POLYGON_URL || "",
+        url:
+          process.env.POLYGON_URL || "",
         blockNumber: 25848203,
       },
     },

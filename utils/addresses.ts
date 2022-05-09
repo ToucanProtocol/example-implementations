@@ -8,7 +8,7 @@ interface IfcAddresses {
 }
 
 const addresses: IfcAddresses = {
-  myAddress: "0x721F6f7A29b99CbdE1F18C4AA7D7AEb31eb2923B",
+  myAddress: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
   bct: "0x2F800Db0fdb5223b3C3f354886d907A671414A7F",
   nct: "0xD838290e877E0188a4A44700463419ED96c16107",
   usdc: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
@@ -17,7 +17,7 @@ const addresses: IfcAddresses = {
 };
 
 export const mumbaiAddresses: IfcAddresses = {
-  myAddress: "0x721F6f7A29b99CbdE1F18C4AA7D7AEb31eb2923B",
+  myAddress: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
   bct: "0xf2438A14f668b1bbA53408346288f3d7C71c10a1",
   nct: "0x7beCBA11618Ca63Ead5605DE235f6dD3b25c530E",
   usdc: "0xe6b8a5CF854791412c1f6EFC7CAf629f5Df1c747",
