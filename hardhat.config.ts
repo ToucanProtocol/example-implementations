@@ -48,7 +48,6 @@ const config: HardhatUserConfig = {
       forking: {
         url:
           process.env.POLYGON_URL || "",
-        blockNumber: 25848203,
       },
     },
   },

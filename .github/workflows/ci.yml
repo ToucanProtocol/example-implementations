@@ -58,10 +58,6 @@ jobs:
 
       - name: Test contract
         run: npx hardhat test
-        env:
-          POLYGON_URL: ${{ secrets.POLYGON_URL }}
 
       - name: Deploy contract
         run: npx hardhat --network hardhat run ./scripts/deployOffsetHelper.ts
-        env:
-          POLYGON_URL: ${{ secrets.POLYGON_URL }}
