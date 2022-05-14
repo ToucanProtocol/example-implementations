@@ -1,5 +1,13 @@
 {
   "name": "example-implementations",
+  "scripts": {
+    "chain": "yarn hardhat node --network hardhat",
+    "compile": "yarn hardhat compile",
+    "console": "yarn hardhat console",
+    "coverage": "yarn hardhat coverage --network hardhat",
+    "deploy": "yarn hardhat deploy",
+    "test": "yarn hardhat test --network hardhat"
+  },
   "devDependencies": {
     "@nomiclabs/hardhat-ethers": "^2.0.5",
     "@nomiclabs/hardhat-etherscan": "^3.0.3",

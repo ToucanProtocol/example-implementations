@@ -48,20 +48,20 @@ jobs:
             ${{ runner.os }}-${{ matrix.node-version }}-nodemodules-
 
       - name: Install packages
-        run: npm i
+        run: yarn
 
       - name: Prepare environment
         run: cp .env.example .env
 
       - name: Build contract
-        run: npx hardhat compile
+        run: yarn compile
 
       - name: Test contract
-        run: npx hardhat test
+        run: yarn test
         env:
           POLYGON_URL: ${{ secrets.POLYGON_URL }}
 
       - name: Deploy contract
-        run: npx hardhat --network hardhat run ./scripts/deployOffsetHelper.ts
+        run: yarn hardhat --network hardhat run ./scripts/deployOffsetHelper.ts
         env:
           POLYGON_URL: ${{ secrets.POLYGON_URL }}
