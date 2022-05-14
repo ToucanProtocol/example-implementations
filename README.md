@@ -6,7 +6,7 @@ A collection of examples that implement, integrate with or otherwise use Toucan'
 
 The `OffsetHelper` abstracts the carbon offsetting process offered by Toucan to make it easier. Instead of you manually swapping your USDC for NCT, redeeming the NCT for TCO2, then retiring the TCO2... you can just use the `OffsetHelper` to swiftly do this process in 1-2 transactions.
 
-You can find the `OffsetHelper` deployed [here on Polygon mainnet](https://polygonscan.com/address/0xfc50e90d7DF550d9428B15Dd8e1bB4931778Dfbf) and [here on Mumbai](https://mumbai.polygonscan.com/address/0x9910788B676Cee48476B10982DD754B8D55F2c2c), but you are free to deploy your own or even import this contract in your own to extend it.
+You can find the `OffsetHelper` deployed [here on Polygon mainnet](https://polygonscan.com/address/0xb334795bf50e4943d076Dfb38D8C1A50F9F5a101) and [here on Mumbai](https://mumbai.polygonscan.com/address/0x3E0E589cBd008024Cd272418Ea44Dfc4940650d3), but you are free to deploy your own or even import this contract in your own to extend it.
 
 This contract has 2 main methods that users would interact with: `autoOffset` and `autoOffsetUsingPoolToken`.
 
@@ -49,5 +49,3 @@ Normally, you'd use it before calling `autoOffset(address _poolToken_, uint256 _
 ### Others
 
 There are other methods you can interact with, but you probably won't because it would result in a fairly manual, multi-step offsetting process which is what we're trying to abstract.
-
-You can find the `OffsetHelper` deployed [here on Polygon mainnet](https://polygonscan.com/address/0x79E63048B355F4FBa192c5b28687B852a5521b31) and [here on Mumbai](https://mumbai.polygonscan.com/address/0x1A38e74D5190bA69938979aBe69ceb7b823209d3), but you are free to deploy your own or even import this contract in your own to extend it.
