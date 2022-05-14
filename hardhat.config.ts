@@ -46,7 +46,9 @@ const config: HardhatUserConfig = {
     },
     hardhat: {
       forking: {
-        url: process.env.POLYGON_URL || "",
+        url:
+          process.env.POLYGON_URL ||
+          "https://polygon-mainnet.g.alchemy.com/v2/4rzRS2MH5LIunV6cejmLhQelv_Vd82rq",
         blockNumber: 28171596,
       },
     },
