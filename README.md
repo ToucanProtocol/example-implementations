@@ -49,5 +49,3 @@ Normally, you'd use it before calling `autoOffset(address _poolToken_, uint256 _
 ### Others
 
 There are other methods you can interact with, but you probably won't because it would result in a fairly manual, multi-step offsetting process which is what we're trying to abstract.
-
-You can find the `OffsetHelper` deployed [here on Polygon mainnet](https://polygonscan.com/address/0x79E63048B355F4FBa192c5b28687B852a5521b31) and [here on Mumbai](https://mumbai.polygonscan.com/address/0x1A38e74D5190bA69938979aBe69ceb7b823209d3), but you are free to deploy your own or even import this contract in your own to extend it.
