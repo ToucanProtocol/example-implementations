@@ -215,6 +215,16 @@ contract OffsetHelper is OffsetHelperStorage {
         path[1] = eligibleTokenAddresses["USDC"];
         path[2] = _toToken;
 
+        uint256[] memory expectedAmounts = routerSushi.getAmountsIn(
+            _amount,
+            path
+        );
+
+        require(
+            msg.value >= expectedAmounts[0],
+            "You didn't send enough MATIC."
+        );
+
         // swap MATIC for tokens
         uint256[] memory amounts = routerSushi.swapETHForExactTokens{
             value: msg.value
@@ -225,7 +235,8 @@ contract OffsetHelper is OffsetHelperStorage {
             (bool success, ) = msg.sender.call{value: leftoverETH}(
                 new bytes(0)
             );
-            require(success, "Failed to send dust ETH back to user.");
+
+            require(success, "Failed to send surplus ETH back to user.");
         }
 
         // update balances

@@ -651,12 +651,17 @@ describe("Offset Helper - autoOffset", function () {
         offsetHelper.address
       );
 
+      const maticToSend = await offsetHelper.howMuchETHShouldISendToSwap(
+        addresses.nct,
+        parseEther("1.0")
+      );
+
       await (
         await offsetHelper["swap(address,uint256)"](
           addresses.nct,
           parseEther("1.0"),
           {
-            value: parseEther("5.0"),
+            value: maticToSend.add(parseEther("0.5")),
           }
         )
       ).wait();
