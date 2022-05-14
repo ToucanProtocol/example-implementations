@@ -8,6 +8,7 @@ import "./interfaces/IToucanPoolToken.sol";
 import "./interfaces/IUniswapV2Router02.sol";
 import "./interfaces/IToucanCarbonOffsets.sol";
 import "./interfaces/IToucanContractRegistry.sol";
+import "hardhat/console.sol";
 
 contract OffsetHelper is OffsetHelperStorage {
     using SafeERC20 for IERC20;
@@ -26,40 +27,49 @@ contract OffsetHelper is OffsetHelperStorage {
         }
     }
 
+    event Redeemed(
+        address who,
+        address poolToken,
+        address[] tco2s,
+        uint256[] amounts
+    );
+
     // @description this is the autoOffset method for when the user wants to input tokens like USDC, WETH, WMATIC
     // @param _depositedToken the address of the token that the user sends (could be USDC, WETH, WMATIC)
     // @param _poolToken the pool that the user wants to use (could be NCT or BCT)
     // @param _amountToOffset the amount of TCO2 to offset
-    function autoOffset(
+    // @returns 2 arrays, one containing the tco2s that were redeemed and another the amounts
+    function autoOffsetUsingToken(
         address _depositedToken,
         address _poolToken,
         uint256 _amountToOffset
-    ) public {
+    ) public returns (address[] memory tco2s, uint256[] memory amounts) {
         // swap input token for BCT / NCT
         swap(_depositedToken, _poolToken, _amountToOffset);
 
         // redeem BCT / NCT for TCO2s
-        autoRedeem(_poolToken, _amountToOffset);
+        (tco2s, amounts) = autoRedeem(_poolToken, _amountToOffset);
 
         // retire the TCO2s to achieve offset
-        autoRetire(_amountToOffset, _poolToken);
+        autoRetire(tco2s, amounts);
     }
 
     // @description this is the autoOffset method for when the user wants to input MATIC
     // @param _poolToken the pool that the user wants to use (could be NCT or BCT)
     // @param _amountToOffset the amount of TCO2 to offset
-    function autoOffset(address _poolToken, uint256 _amountToOffset)
+    function autoOffsetUsingETH(address _poolToken, uint256 _amountToOffset)
         public
         payable
+        returns (address[] memory tco2s, uint256[] memory amounts)
     {
         // swap MATIC for BCT / NCT
         swap(_poolToken, _amountToOffset);
 
         // redeem BCT / NCT for TCO2s
-        autoRedeem(_poolToken, _amountToOffset);
+        (tco2s, amounts) = autoRedeem(_poolToken, _amountToOffset);
 
         // retire the TCO2s to achieve offset
-        autoRetire(_amountToOffset, _poolToken);
+        autoRetire(tco2s, amounts);
     }
 
     // @description this is the autoOffset method for when the user already has and wants to input BCT / NCT
@@ -68,15 +78,15 @@ contract OffsetHelper is OffsetHelperStorage {
     function autoOffsetUsingPoolToken(
         address _poolToken,
         uint256 _amountToOffset
-    ) public {
+    ) public returns (address[] memory tco2s, uint256[] memory amounts) {
         // deposit pool token from user to this contract
         deposit(_poolToken, _amountToOffset);
 
         // redeem BCT / NCT for TCO2s
-        autoRedeem(_poolToken, _amountToOffset);
+        (tco2s, amounts) = autoRedeem(_poolToken, _amountToOffset);
 
         // retire the TCO2s to achieve offset
-        autoRetire(_amountToOffset, _poolToken);
+        autoRetire(tco2s, amounts);
     }
 
     // checks address and returns if can be used at all by the contract
@@ -246,7 +256,11 @@ contract OffsetHelper is OffsetHelperStorage {
     // @param _fromToken could be the address of NCT or BCT
     // @param _amount amount to redeem
     // @notice needs to be approved on the client side
-    function autoRedeem(address _fromToken, uint256 _amount) public {
+    // @returns 2 arrays, one containing the tco2s that were redeemed and another the amounts
+    function autoRedeem(address _fromToken, uint256 _amount)
+        public
+        returns (address[] memory tco2s, uint256[] memory amounts)
+    {
         require(isRedeemable(_fromToken), "Can't redeem this token.");
 
         require(
@@ -257,60 +271,46 @@ contract OffsetHelper is OffsetHelperStorage {
         // instantiate pool token (NCT or BCT)
         IToucanPoolToken PoolTokenImplementation = IToucanPoolToken(_fromToken);
 
-        // auto redeem NCT for TCO2; will transfer automatically picked TCO2 to this contract
-        PoolTokenImplementation.redeemAuto(_amount);
-        balances[msg.sender][_fromToken] -= _amount;
+        // auto redeem pool token for TCO2; will transfer automatically picked TCO2 to this contract
+        (tco2s, amounts) = PoolTokenImplementation.redeemAuto2(_amount);
 
-        // update TCO2 balances of the user to reflect the redeeming
-        tco2Balance[msg.sender] += _amount;
+        // update balances
+        balances[msg.sender][_fromToken] -= _amount;
+        for (uint256 index = 0; index < tco2s.length; index++) {
+            balances[msg.sender][tco2s[index]] += amounts[index];
+        }
+
+        emit Redeemed(msg.sender, _fromToken, tco2s, amounts);
     }
 
-    // @param _amount the amount of TCO2 to retire
-    // @param _pool the pool that will be used to get scoredTCO2s
-    function autoRetire(uint256 _amount, address _pool) public {
-        require(isRedeemable(_pool), "Can't use this pool for scoredTCO2s.");
+    // @param _tco2s the addresses of the TCO2s to retire
+    // @param _amounts the amounts to retire from the matching TCO2
+    function autoRetire(address[] memory _tco2s, uint256[] memory _amounts)
+        public
+    {
+        require(_tco2s.length > 0, "You need to have at least one TCO2.");
+
         require(
-            tco2Balance[msg.sender] >= _amount,
-            "You don't have enough TCO2 in this contract."
+            _tco2s.length == _amounts.length,
+            "You need an equal number of addresses and amounts"
         );
 
-        // instantiate pool token (NCT or BCT)
-        IToucanPoolToken PoolTokenImplementation = IToucanPoolToken(_pool);
-
-        // I'm attempting to loop over all possible TCO2s that the contract could have
-        // see the contract's balance for said TCO2
-        // and retire until the whole amount has been retired
-        uint256 remainingAmount = _amount;
         uint256 i = 0;
-        address[] memory scoredTCO2s = PoolTokenImplementation.getScoredTCO2s();
-        uint256 scoredTCO2Len = scoredTCO2s.length;
-        while (remainingAmount > 0 && i < scoredTCO2Len) {
-            address tco2 = scoredTCO2s[i];
-            uint256 balance = IERC20(tco2).balanceOf(address(this));
-            if (balance < 1e15) continue;
-            uint256 amountToRetire = remainingAmount > balance
-                ? balance
-                : remainingAmount;
-            IToucanCarbonOffsets(tco2).retire(amountToRetire);
-            remainingAmount -= amountToRetire;
+        while (i < _tco2s.length) {
+            if (_amounts[i] < 1e15) continue;
+            require(
+                balances[msg.sender][_tco2s[i]] >= _amounts[i],
+                "You don't have enough of this TCO2"
+            );
+
+            balances[msg.sender][_tco2s[i]] -= _amounts[i];
+
+            IToucanCarbonOffsets(_tco2s[i]).retire(_amounts[i]);
+
             unchecked {
                 ++i;
             }
         }
-
-        // update the user's TCO2 balance
-        tco2Balance[msg.sender] -= _amount;
-
-        // record how much user has offset (will be useful in minting the NFT for user)
-        overallOffsetAmount[msg.sender] += _amount;
-    }
-
-    // @description mints NFT for all the TCO2 the user has offset through this contract
-    function mintNFT() public {
-        // TODO
-        // require the user has overallOffsetAmount > 0
-        // mint NFT
-        // reset overallOffsetAmount for user to 0
     }
 
     // ----------------------------------------

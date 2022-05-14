@@ -57,8 +57,8 @@ describe("Offset Helper - autoRetire", function () {
     );
   });
 
-  describe("autoRetire() using NCT", function () {
-    it("User's in-contract TCO2 balance should be 0.0 - manual offset", async function () {
+  describe("Testing autoRetire()", function () {
+    it("Should retire using an NCT deposit", async function () {
       // since I have no NCT, I need to impersonate an account that has it
       // I'll also give it some wei, just to be safe
       const addressToImpersonate = "0xdab7f2bc9aa986d9759718203c9a76534894e900";
@@ -68,7 +68,7 @@ describe("Offset Helper - autoRetire", function () {
       );
       await network.provider.send("hardhat_setBalance", [
         addressToImpersonate,
-        parseEther("2.0").toHexString(),
+        parseEther("8.0").toHexString(),
       ]);
 
       // @ts-ignore
@@ -90,136 +90,34 @@ describe("Offset Helper - autoRetire", function () {
           .deposit(addresses.nct, parseEther("1.0"))
       ).wait();
 
-      await (
+      const redeemReceipt = await (
         await offsetHelper
           .connect(signer)
           .autoRedeem(addresses.nct, parseEther("1.0"))
       ).wait();
 
-      await (
-        await offsetHelper
-          .connect(signer)
-          .autoRetire(parseEther("1.0"), addresses.nct)
-      ).wait();
+      if (!redeemReceipt.events) {
+        return;
+      }
+      const tco2s =
+        redeemReceipt.events[redeemReceipt.events.length - 1].args?.tco2s;
+      const amounts =
+        redeemReceipt.events[redeemReceipt.events.length - 1].args?.amounts;
 
-      // I expect the user's in-contract TCO2 balance to be 0.0
-      expect(
-        formatEther(
-          await offsetHelper.tco2Balance(
-            "0xdab7f2bc9aa986d9759718203c9a76534894e900"
-          )
-        )
-      ).to.be.eql("0.0");
+      await expect(offsetHelper.connect(signer).autoRetire(tco2s, amounts)).to
+        .not.be.reverted;
     });
 
-    it("OffsetHelpers's TCO2 balances should be 0.0 - manual offset", async function () {
-      // since I have no NCT, I need to impersonate an account that has it
-      // I'll also give it some wei, just to be safe
-      const addressToImpersonate = "0xdab7f2bc9aa986d9759718203c9a76534894e900";
-      const signer = await impersonateAccount(
-        addresses.myAddress,
-        addressToImpersonate
-      );
-      await network.provider.send("hardhat_setBalance", [
-        addressToImpersonate,
-        parseEther("2.0").toHexString(),
-      ]);
-
-      // @ts-ignore
-      nct = new ethers.Contract(
-        addresses.nct,
-        hardhatContracts.contracts.NatureCarbonTonne.abi,
-        owner
-      );
-
-      await (
-        await nct
-          .connect(signer)
-          .approve(offsetHelper.address, parseEther("1.0"))
-      ).wait();
-
-      await (
-        await offsetHelper
-          .connect(signer)
-          .deposit(addresses.nct, parseEther("1.0"))
-      ).wait();
-
-      await (
-        await offsetHelper
-          .connect(signer)
-          .autoRedeem(addresses.nct, parseEther("1.0"))
-      ).wait();
-
-      await (
-        await offsetHelper
-          .connect(signer)
-          .autoRetire(parseEther("1.0"), addresses.nct)
-      ).wait();
-
-      const totalTCO2sHeld = await getTotalTCO2sHeld(nct, offsetHelper, owner);
-
-      expect(formatEther(totalTCO2sHeld)).to.be.eql("0.0");
-    });
-
-    it("Should fail cause I don't have enough TCO2 in-contract", async function () {
+    it("Should fail because we haven't redeemed any TCO2", async function () {
       await expect(
-        offsetHelper.autoRetire(parseEther("1.0"), addresses.nct)
-      ).to.be.revertedWith("You don't have enough TCO2 in this contract.");
-    });
-  });
-
-  describe("autoRetire() using BCT", async function () {
-    it("User's in-contract TCO2 balance should be 0.0 - manual offset, using BCT", async function () {
-      // since I have no BCT, I need to impersonate an account that has it
-      // I'll also give it some wei, just to be safe
-      const addressToImpersonate = "0xCef2D0c7d89C3Dcc7a8E8AF561b0294BCD6e9EBD";
-      const signer = await impersonateAccount(
-        addresses.myAddress,
-        addressToImpersonate
-      );
-      await network.provider.send("hardhat_setBalance", [
-        addressToImpersonate,
-        parseEther("2.0").toHexString(),
-      ]);
-
-      // @ts-ignore
-      bct = new ethers.Contract(addresses.bct, poolContract.abi, owner);
-
-      await (
-        await bct
-          .connect(signer)
-          .approve(offsetHelper.address, parseEther("1.0"))
-      ).wait();
-
-      await (
-        await offsetHelper
-          .connect(signer)
-          .deposit(addresses.bct, parseEther("1.0"))
-      ).wait();
-
-      await (
-        await offsetHelper
-          .connect(signer)
-          .autoRedeem(addresses.bct, parseEther("1.0"))
-      ).wait();
-
-      await (
-        await offsetHelper
-          .connect(signer)
-          .autoRetire(parseEther("1.0"), addresses.bct)
-      ).wait();
-
-      // I expect the user's in-contract TCO2 balance to be 0.0
-      expect(
-        formatEther(
-          await offsetHelper.tco2Balance(
-            "0xCef2D0c7d89C3Dcc7a8E8AF561b0294BCD6e9EBD"
-          )
+        offsetHelper.autoRetire(
+          ["0xb139C4cC9D20A3618E9a2268D73Eff18C496B991"],
+          [parseEther("1.0")]
         )
-      ).to.be.eql("0.0");
+      ).to.be.revertedWith("You don't have enough of this TCO2");
     });
 
-    it("OffsetHelpers's TCO2 balances should be 0.0 - manual offset, using BCT", async function () {
+    it("Should retire using an NCT deposit", async function () {
       // since I have no BCT, I need to impersonate an account that has it
       // I'll also give it some wei, just to be safe
       const addressToImpersonate = "0xCef2D0c7d89C3Dcc7a8E8AF561b0294BCD6e9EBD";
@@ -247,21 +145,22 @@ describe("Offset Helper - autoRetire", function () {
           .deposit(addresses.bct, parseEther("1.0"))
       ).wait();
 
-      await (
+      const redeemReceipt = await (
         await offsetHelper
           .connect(signer)
           .autoRedeem(addresses.bct, parseEther("1.0"))
       ).wait();
 
-      await (
-        await offsetHelper
-          .connect(signer)
-          .autoRetire(parseEther("1.0"), addresses.bct)
-      ).wait();
+      if (!redeemReceipt.events) {
+        return;
+      }
+      const tco2s =
+        redeemReceipt.events[redeemReceipt.events.length - 1].args?.tco2s;
+      const amounts =
+        redeemReceipt.events[redeemReceipt.events.length - 1].args?.amounts;
 
-      const totalTCO2sHeld = await getTotalTCO2sHeld(bct, offsetHelper, owner);
-
-      expect(formatEther(totalTCO2sHeld)).to.be.eql("0.0");
+      await expect(offsetHelper.connect(signer).autoRetire(tco2s, amounts)).to
+        .not.be.reverted;
     });
   });
 });

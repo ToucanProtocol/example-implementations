@@ -56,7 +56,7 @@ describe("Offset Helper - Others", function () {
     );
   });
 
-  describe("deposit() and withdraw()", function () {
+  describe("Testing deposit() and withdraw()", function () {
     it("Should deposit 1.0 NCT", async function () {
       // since I have no NCT, I need to impersonate an account that has it
       // I'll also give it some wei, just to be safe
@@ -99,7 +99,7 @@ describe("Offset Helper - Others", function () {
       ).to.be.eql("1.0");
     });
 
-    it("Should fail to deposit cause I have no NCT", async function () {
+    it("Should fail to deposit because we have no NCT", async function () {
       // @ts-ignore
       nct = new ethers.Contract(
         addresses.nct,
@@ -161,7 +161,7 @@ describe("Offset Helper - Others", function () {
       );
     });
 
-    it("Should fail to withdraw cause I haven't deposited enough NCT", async function () {
+    it("Should fail to withdraw because we haven't deposited enough NCT", async function () {
       // since I have no NCT, I need to impersonate an account that has it
       // I'll also give it some wei, just to be safe
       const addressToImpersonate = "0xdab7f2bc9aa986d9759718203c9a76534894e900";
