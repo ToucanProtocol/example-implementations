@@ -9,6 +9,7 @@ import "solidity-coverage";
 import { tokens } from "./utils/tokens";
 import addresses, { mumbaiAddresses } from "./utils/addresses";
 import { network } from "hardhat";
+import { boolean } from "hardhat/internal/core/params/argumentTypes";
 
 dotenv.config();
 
@@ -20,8 +21,14 @@ task("accounts", "Prints the list of accounts", async (taskArgs, hre) => {
   }
 });
 
-task("deployOffsetHelper", "Deploys and verifies OffsetHelper").setAction(
-  async (taskArgs, hre) => {
+task("deployOffsetHelper", "Deploys and verifies OffsetHelper")
+  .addOptionalParam(
+    "verify",
+    "Set false to not verify the OffsetHelper after deployment",
+    true,
+    boolean
+  )
+  .setAction(async (taskArgs, hre) => {
     const OffsetHelper = await hre.ethers.getContractFactory("OffsetHelper");
 
     const addressesToUse =
@@ -35,25 +42,29 @@ task("deployOffsetHelper", "Deploys and verifies OffsetHelper").setAction(
       addressesToUse.wmatic,
     ]);
     await oh.deployed();
-    await oh.deployTransaction.wait(5);
     console.log(`OffsetHelper deployed on ${hre.network.name} to:`, oh.address);
 
-    await hre.run("verify:verify", {
-      address: oh.address,
-      constructorArguments: [
-        tokens,
-        [
-          addressesToUse.bct,
-          addressesToUse.nct,
-          addressesToUse.usdc,
-          addressesToUse.weth,
-          addressesToUse.wmatic,
+    if (taskArgs.verify === true) {
+      await oh.deployTransaction.wait(5);
+      await hre.run("verify:verify", {
+        address: oh.address,
+        constructorArguments: [
+          tokens,
+          [
+            addressesToUse.bct,
+            addressesToUse.nct,
+            addressesToUse.usdc,
+            addressesToUse.weth,
+            addressesToUse.wmatic,
+          ],
         ],
-      ],
-    });
-    console.log(`OffsetHelper verified on ${hre.network.name} to:`, oh.address);
-  }
-);
+      });
+      console.log(
+        `OffsetHelper verified on ${hre.network.name} to:`,
+        oh.address
+      );
+    }
+  });
 
 const config: HardhatUserConfig = {
   defaultNetwork: "hardhat",

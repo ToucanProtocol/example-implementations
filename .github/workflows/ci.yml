@@ -62,6 +62,6 @@ jobs:
           POLYGON_URL: ${{ secrets.POLYGON_URL }}
 
       - name: Deploy contract
-        run: yarn hardhat --network hardhat deployOffsetHelper
+        run: yarn hardhat --network hardhat deployOffsetHelper --verify false
         env:
           POLYGON_URL: ${{ secrets.POLYGON_URL }}
