@@ -2,11 +2,15 @@
 
 A collection of examples that implement, integrate with or otherwise use Toucan's contracts and infrastructure. Some of these may be used in production.
 
+## Contracts
+
+| Contract     | Polygon                                                                                                                  | Mumbai                                                                                                                          |
+| ------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
+| OffsetHelper | [0x2E730e699D6c5A9F7dF40E6D7cbB82638d56dF6B](https://polygonscan.com/address/0x2E730e699D6c5A9F7dF40E6D7cbB82638d56dF6B) | [0x1b5e0afaDAcC6D4631C94bF35D3e3F4d60ad8323](https://mumbai.polygonscan.com/address/0x1b5e0afaDAcC6D4631C94bF35D3e3F4d60ad8323) |
+
 ## OffsetHelper
 
 The `OffsetHelper` abstracts the carbon offsetting process offered by Toucan to make it easier. Instead of you manually swapping your USDC for NCT, redeeming the NCT for TCO2, then retiring the TCO2... you can just use the `OffsetHelper` to swiftly do this process in 1-2 transactions.
-
-You can find the `OffsetHelper` deployed [here on Polygon mainnet](https://polygonscan.com/address/0xb334795bf50e4943d076Dfb38D8C1A50F9F5a101) and [here on Mumbai](https://mumbai.polygonscan.com/address/0x3E0E589cBd008024Cd272418Ea44Dfc4940650d3), but you are free to deploy your own or even import this contract in your own to extend it.
 
 This contract has 2 main methods that users would interact with: `autoOffset` and `autoOffsetUsingPoolToken`.
 
