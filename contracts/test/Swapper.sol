@@ -20,7 +20,7 @@ contract Swapper {
         }
     }
 
-    function howMuchETHShouldISendToSwap(address _toToken, uint256 _amount)
+    function calculateNeededETHAmount(address _toToken, uint256 _amount)
         public
         view
         returns (uint256)

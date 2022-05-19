@@ -93,21 +93,21 @@ describe("Offset Helper - autoOffset", function () {
     );
 
     await swapper.swap(addresses.weth, parseEther("20.0"), {
-      value: await swapper.howMuchETHShouldISendToSwap(
+      value: await swapper.calculateNeededETHAmount(
         addresses.weth,
         parseEther("20.0")
       ),
     });
 
     await swapper.swap(addresses.bct, parseEther("50.0"), {
-      value: await swapper.howMuchETHShouldISendToSwap(
+      value: await swapper.calculateNeededETHAmount(
         addresses.bct,
         parseEther("50.0")
       ),
     });
 
     await swapper.swap(addresses.nct, parseEther("50.0"), {
-      value: await swapper.howMuchETHShouldISendToSwap(
+      value: await swapper.calculateNeededETHAmount(
         addresses.nct,
         parseEther("50.0")
       ),
@@ -117,7 +117,14 @@ describe("Offset Helper - autoOffset", function () {
   describe("Testing autoOffset()", function () {
     it("Should retire using a WETH swap and NCT redemption", async function () {
       await (
-        await weth.approve(offsetHelper.address, parseEther("1.0"))
+        await weth.approve(
+          offsetHelper.address,
+          await offsetHelper.calculateNeededTokenAmount(
+            addresses.weth,
+            addresses.nct,
+            parseEther("1.0")
+          )
+        )
       ).wait();
 
       await expect(
@@ -130,7 +137,7 @@ describe("Offset Helper - autoOffset", function () {
     });
 
     it("Should retire using a MATIC swap and NCT redemption", async function () {
-      const maticToSend = await offsetHelper.howMuchETHShouldISendToSwap(
+      const maticToSend = await offsetHelper.calculateNeededETHAmount(
         addresses.nct,
         parseEther("1.0")
       );
@@ -152,7 +159,14 @@ describe("Offset Helper - autoOffset", function () {
 
     it("Should retire using a WETH swap and BCT redemption", async function () {
       await (
-        await weth.approve(offsetHelper.address, parseEther("1.0"))
+        await weth.approve(
+          offsetHelper.address,
+          await offsetHelper.calculateNeededTokenAmount(
+            addresses.weth,
+            addresses.bct,
+            parseEther("1.0")
+          )
+        )
       ).wait();
 
       await expect(
@@ -327,7 +341,14 @@ describe("Offset Helper - autoOffset", function () {
       const initialBalance = await nct.balanceOf(offsetHelper.address);
 
       await (
-        await weth.approve(offsetHelper.address, parseEther("1.0"))
+        await weth.approve(
+          offsetHelper.address,
+          await offsetHelper.calculateNeededTokenAmount(
+            addresses.weth,
+            addresses.nct,
+            parseEther("1.0")
+          )
+        )
       ).wait();
 
       await (
@@ -351,7 +372,7 @@ describe("Offset Helper - autoOffset", function () {
     });
 
     it("Should swap MATIC for 1.0 NCT", async function () {
-      const maticToSend = await offsetHelper.howMuchETHShouldISendToSwap(
+      const maticToSend = await offsetHelper.calculateNeededETHAmount(
         addresses.nct,
         parseEther("1.0")
       );
@@ -375,7 +396,7 @@ describe("Offset Helper - autoOffset", function () {
         offsetHelper.address
       );
 
-      const maticToSend = await offsetHelper.howMuchETHShouldISendToSwap(
+      const maticToSend = await offsetHelper.calculateNeededETHAmount(
         addresses.nct,
         parseEther("1.0")
       );
@@ -422,9 +443,13 @@ describe("Offset Helper - autoOffset", function () {
     it("Should swap WETH for 1.0 BCT", async function () {
       const initialBalance = await bct.balanceOf(offsetHelper.address);
 
-      await (
-        await weth.approve(offsetHelper.address, parseEther("1.0"))
-      ).wait();
+      const neededAmount = await offsetHelper.calculateNeededTokenAmount(
+        addresses.weth,
+        addresses.bct,
+        parseEther("1.0")
+      );
+
+      await (await weth.approve(offsetHelper.address, neededAmount)).wait();
 
       await (
         await offsetHelper["swap(address,address,uint256)"](
