@@ -120,6 +120,36 @@ contract OffsetHelper is OffsetHelperStorage {
         return false;
     }
 
+    // @description tells user how much of _fromToken is required to swap for an amount of pool tokens
+    // @param _fromToken the token the user wants to swap for pool token
+    // @param _toToken token to swap for (should be NCT or BCT)
+    // @param _amount amount of NCT / BCT wanted
+    // @returns uint256 representing the required ETH / MATIC to get the amount of NCT / BCT
+    function calculateNeededTokenAmount(
+        address _fromToken,
+        address _toToken,
+        uint256 _amount
+    ) public view returns (uint256) {
+        // check tokens
+        require(
+            isSwapable(_fromToken) && isRedeemable(_toToken),
+            "Can't swap this token"
+        );
+
+        // instantiate sushi router
+        IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
+
+        // establish path
+        address[] memory path = new address[](3);
+        path[0] = _fromToken;
+        path[1] = eligibleTokenAddresses["USDC"];
+        path[2] = _toToken;
+
+        // swap input token for pool token
+        uint256[] memory amountsIn = routerSushi.getAmountsIn(_amount, path);
+        return amountsIn[0];
+    }
+
     // @description uses SushiSwap to exchange eligible tokens for BCT / NCT
     // @param _fromToken token to deposit and swap
     // @param _toToken token to swap for (will be held within contract)
@@ -130,17 +160,21 @@ contract OffsetHelper is OffsetHelperStorage {
         address _toToken,
         uint256 _amount
     ) public {
-        // check tokens
-        require(
-            isSwapable(_fromToken) && isRedeemable(_toToken),
-            "Can't swap this token"
+        uint256 neededAmountToSend = calculateNeededTokenAmount(
+            _fromToken,
+            _toToken,
+            _amount
         );
 
         // transfer token from user to this contract
-        IERC20(_fromToken).safeTransferFrom(msg.sender, address(this), _amount);
+        IERC20(_fromToken).safeTransferFrom(
+            msg.sender,
+            address(this),
+            neededAmountToSend
+        );
 
         // approve sushi router
-        IERC20(_fromToken).approve(sushiRouterAddress, _amount);
+        IERC20(_fromToken).approve(sushiRouterAddress, neededAmountToSend);
 
         // instantiate sushi router
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
@@ -171,11 +205,11 @@ contract OffsetHelper is OffsetHelperStorage {
 
     receive() external payable {}
 
-    // @description tells user how much ETH/MATIC is required to swap for an amount of specified tokens
+    // @description tells user how much ETH/MATIC is required to swap for an amount of pool tokens
     // @param _toToken token to swap for (should be NCT or BCT)
     // @param _amount amount of NCT / BCT wanted
     // @returns uint256 representing the required ETH / MATIC to get the amount of NCT / BCT
-    function howMuchETHShouldISendToSwap(address _toToken, uint256 _amount)
+    function calculateNeededETHAmount(address _toToken, uint256 _amount)
         public
         view
         returns (uint256)
@@ -187,7 +221,6 @@ contract OffsetHelper is OffsetHelperStorage {
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
         // establish path;
-        // sushi router expects path[0] == WMATIC, but otherwise the path will resemble the one above
         address[] memory path = new address[](3);
         path[0] = eligibleTokenAddresses["WMATIC"];
         path[1] = eligibleTokenAddresses["USDC"];

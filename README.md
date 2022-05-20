@@ -6,7 +6,7 @@ A collection of examples that implement, integrate with or otherwise use Toucan'
 
 | Contract     | Polygon                                                                                                                  | Mumbai                                                                                                                          |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| OffsetHelper | [0x2E730e699D6c5A9F7dF40E6D7cbB82638d56dF6B](https://polygonscan.com/address/0x2E730e699D6c5A9F7dF40E6D7cbB82638d56dF6B) | [0x1b5e0afaDAcC6D4631C94bF35D3e3F4d60ad8323](https://mumbai.polygonscan.com/address/0x1b5e0afaDAcC6D4631C94bF35D3e3F4d60ad8323) |
+| OffsetHelper | [0x7229F708d2d1C29b1508E35695a3070F55BbA479](https://polygonscan.com/address/0x7229F708d2d1C29b1508E35695a3070F55BbA479) | [0xE0a1D62C84f7Ca4611C0ada6cfC3E9187a7A97e6](https://mumbai.polygonscan.com/address/0xE0a1D62C84f7Ca4611C0ada6cfC3E9187a7A97e6) |
 
 ## OffsetHelper
 
@@ -28,9 +28,9 @@ If you call the `autoOffset()` method specifying only 2 params, it will be payab
 
 The first param is the pool token you want the contract to use (could be NCT or BCT) and the second is the amount of TCO2 to retire.
 
-In case you send too much MATIC in the `msg.value`, the contract is programed to send leftover MATIC back to the user. But, I suggest you use the `howMuchETHShouldISendToSwap()` method of the contract before calling `autoOffset()` in this case.
+In case you send too much MATIC in the `msg.value`, the contract is programed to send leftover MATIC back to the user. But, I suggest you use the `calculateNeededETHAmount()` method of the contract before calling `autoOffset()` in this case.
 
-We'll discuss the `howMuchETHShouldISendToSwap()` method below.
+We'll discuss the `calculateNeededETHAmount()` method below.
 
 ### `autoOffsetUsingPoolToken(address _poolToken, uint256 _amountToOffset)`
 
@@ -42,7 +42,7 @@ The first parameter is the pool token you will deposit to do the offset (could b
 
 You will want to approve the `OffsetHelper` from the token you wish to deposit before calling `autoOffsetUsingPoolToken()` in this case.
 
-### `howMuchETHShouldISendToSwap(address _toToken, uint256 _amount)`
+### `calculateNeededETHAmount(address _toToken, uint256 _amount)`
 
 This is a view method that allows you to see how much MATIC it would cost you to get a certain amount of BCT / NCT.
 
