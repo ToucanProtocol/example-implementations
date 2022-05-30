@@ -30,7 +30,8 @@ interface IToucanCarbonOffsets is IERC20Upgradeable, IERC721Receiver {
 
     function retireFrom(address account, uint256 amount) external;
 
-    function mintCertificate(
+    function mintCertificateLegacy(
+        string calldata retiringEntityString,
         address beneficiary,
         string calldata beneficiaryString,
         string calldata retirementMessage,
@@ -38,6 +39,7 @@ interface IToucanCarbonOffsets is IERC20Upgradeable, IERC721Receiver {
     ) external;
 
     function retireAndMintCertificate(
+        string calldata retiringEntityString,
         address beneficiary,
         string calldata beneficiaryString,
         string calldata retirementMessage,
