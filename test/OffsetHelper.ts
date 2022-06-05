@@ -194,7 +194,7 @@ describe("Offset Helper - autoOffset", function () {
     it("Should fail because we haven't deposited NCT", async function () {
       await expect(
         offsetHelper.autoRedeem(addresses.nct, parseEther("1.0"))
-      ).to.be.revertedWith("You haven't deposited enough NCT / BCT");
+      ).to.be.revertedWith("Insufficient NCT/BCT balance");
     });
 
     it("Should redeem BCT", async function () {
@@ -240,7 +240,7 @@ describe("Offset Helper - autoOffset", function () {
           ["0xb139C4cC9D20A3618E9a2268D73Eff18C496B991"],
           [parseEther("1.0")]
         )
-      ).to.be.revertedWith("You don't have enough of this TCO2");
+      ).to.be.revertedWith("Insufficient TCO2 balance");
     });
 
     it("Should retire using an NCT deposit", async function () {
@@ -320,7 +320,7 @@ describe("Offset Helper - autoOffset", function () {
 
       await expect(
         offsetHelper.withdraw(addresses.nct, parseEther("2.0"))
-      ).to.be.revertedWith("You don't have enough to withdraw.");
+      ).to.be.revertedWith("Insufficient balance");
     });
 
     it("Should deposit 1.0 BCT", async function () {

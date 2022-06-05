@@ -133,10 +133,10 @@ contract OffsetHelper is OffsetHelperStorage {
         // check tokens
         require(
             isSwapable(_fromToken) && isRedeemable(_toToken),
-            "Can't swap this token"
+            "Token not eligible"
         );
 
-        // instantiate sushi router
+        // instantiate router
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
         // establish path
@@ -145,7 +145,7 @@ contract OffsetHelper is OffsetHelperStorage {
         path[1] = eligibleTokenAddresses["USDC"];
         path[2] = _toToken;
 
-        // swap input token for pool token
+        // get expected amountsIn
         uint256[] memory amountsIn = routerSushi.getAmountsIn(_amount, path);
         return amountsIn[0];
     }
@@ -160,36 +160,41 @@ contract OffsetHelper is OffsetHelperStorage {
         address _toToken,
         uint256 _amount
     ) public {
-        uint256 neededAmountToSend = calculateNeededTokenAmount(
-            _fromToken,
-            _toToken,
-            _amount
+        // check tokens
+        require(
+            isSwapable(_fromToken) && isRedeemable(_toToken),
+            "Token not eligible"
         );
 
-        // transfer token from user to this contract
-        IERC20(_fromToken).safeTransferFrom(
-            msg.sender,
-            address(this),
-            neededAmountToSend
-        );
-
-        // approve sushi router
-        IERC20(_fromToken).approve(sushiRouterAddress, neededAmountToSend);
-
-        // instantiate sushi router
+        // instantiate router
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
-        // establish path (in most cases token -> USDC -> NCT/BCT should work)
+        // establish path
         address[] memory path = new address[](3);
         path[0] = _fromToken;
         path[1] = eligibleTokenAddresses["USDC"];
         path[2] = _toToken;
 
-        // swap input token for pool token
-        uint256[] memory amountsIn = routerSushi.getAmountsIn(_amount, path);
+        // estimate amountsIn
+        uint256[] memory expectedAmountsIn = routerSushi.getAmountsIn(
+            _amount,
+            path
+        );
+
+        // transfer tokens
+        IERC20(_fromToken).safeTransferFrom(
+            msg.sender,
+            address(this),
+            expectedAmountsIn[0]
+        );
+
+        // approve router
+        IERC20(_fromToken).approve(sushiRouterAddress, expectedAmountsIn[0]);
+
+        // swap
         routerSushi.swapTokensForExactTokens(
             _amount,
-            amountsIn[2],
+            expectedAmountsIn[2],
             path,
             address(this),
             block.timestamp
@@ -214,19 +219,19 @@ contract OffsetHelper is OffsetHelperStorage {
         view
         returns (uint256)
     {
-        // require token to be redeemable
-        require(isRedeemable(_toToken), "Can't swap for this token");
+        // check token
+        require(isRedeemable(_toToken), "Token not eligible");
 
-        // instantiate sushi router
+        // instantiate router
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
-        // establish path;
+        // establish path
         address[] memory path = new address[](3);
         path[0] = eligibleTokenAddresses["WMATIC"];
         path[1] = eligibleTokenAddresses["USDC"];
         path[2] = _toToken;
 
-        // get and return the amount needed to send to get the mentioned tokens
+        // get expectedAmountsIn
         uint256[] memory amounts = routerSushi.getAmountsIn(_amount, path);
         return amounts[0];
     }
@@ -236,40 +241,40 @@ contract OffsetHelper is OffsetHelperStorage {
     // @param _amount amount of NCT / BCT wanted
     // @notice needs to be provided a message value on client side
     function swap(address _toToken, uint256 _amount) public payable {
-        // check eligibility of token to swap for
-        require(isRedeemable(_toToken), "Can't swap for this token");
+        // check tokens
+        require(isRedeemable(_toToken), "Token not eligible");
 
-        // instantiate sushi
+        // instantiate router
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
-        // sushi router expects path[0] == WMATIC, but otherwise the path will resemble the one above
+        // estabilish path
         address[] memory path = new address[](3);
         path[0] = eligibleTokenAddresses["WMATIC"];
         path[1] = eligibleTokenAddresses["USDC"];
         path[2] = _toToken;
 
-        uint256[] memory expectedAmounts = routerSushi.getAmountsIn(
+        // estimate amountsIn
+        uint256[] memory expectedAmountsIn = routerSushi.getAmountsIn(
             _amount,
             path
         );
 
-        require(
-            msg.value >= expectedAmounts[0],
-            "You didn't send enough MATIC."
-        );
+        // check user sent enough ETH/MATIC
+        require(msg.value >= expectedAmountsIn[0], "Didn't send enough MATIC");
 
-        // swap MATIC for tokens
-        uint256[] memory amounts = routerSushi.swapETHForExactTokens{
+        // swap
+        uint256[] memory amountsIn = routerSushi.swapETHForExactTokens{
             value: msg.value
         }(_amount, path, address(this), block.timestamp);
 
-        if (msg.value > amounts[0]) {
-            uint256 leftoverETH = msg.value - amounts[0];
+        // send surplus back
+        if (msg.value > amountsIn[0]) {
+            uint256 leftoverETH = msg.value - amountsIn[0];
             (bool success, ) = msg.sender.call{value: leftoverETH}(
                 new bytes(0)
             );
 
-            require(success, "Failed to send surplus ETH back to user.");
+            require(success, "Failed to send surplus back");
         }
 
         // update balances
@@ -280,17 +285,17 @@ contract OffsetHelper is OffsetHelperStorage {
     function withdraw(address _erc20Addr, uint256 _amount) public {
         require(
             balances[msg.sender][_erc20Addr] >= _amount,
-            "You don't have enough to withdraw."
+            "Insufficient balance"
         );
 
-        IERC20(_erc20Addr).transfer(msg.sender, _amount);
+        IERC20(_erc20Addr).safeTransfer(msg.sender, _amount);
         balances[msg.sender][_erc20Addr] -= _amount;
     }
 
     // @description allow people to deposit BCT / NCT
     // @notice needs to be approved
     function deposit(address _erc20Addr, uint256 _amount) public {
-        require(isRedeemable(_erc20Addr), "Can't deposit this token");
+        require(isRedeemable(_erc20Addr), "Token not eligible");
 
         IERC20(_erc20Addr).safeTransferFrom(msg.sender, address(this), _amount);
         balances[msg.sender][_erc20Addr] += _amount;
@@ -305,11 +310,11 @@ contract OffsetHelper is OffsetHelperStorage {
         public
         returns (address[] memory tco2s, uint256[] memory amounts)
     {
-        require(isRedeemable(_fromToken), "Can't redeem this token.");
+        require(isRedeemable(_fromToken), "Token not eligible");
 
         require(
             balances[msg.sender][_fromToken] >= _amount,
-            "You haven't deposited enough NCT / BCT"
+            "Insufficient NCT/BCT balance"
         );
 
         // instantiate pool token (NCT or BCT)
@@ -320,7 +325,8 @@ contract OffsetHelper is OffsetHelperStorage {
 
         // update balances
         balances[msg.sender][_fromToken] -= _amount;
-        for (uint256 index = 0; index < tco2s.length; index++) {
+        uint256 tco2sLen = tco2s.length;
+        for (uint256 index = 0; index < tco2sLen; index++) {
             balances[msg.sender][tco2s[index]] += amounts[index];
         }
 
@@ -332,18 +338,16 @@ contract OffsetHelper is OffsetHelperStorage {
     function autoRetire(address[] memory _tco2s, uint256[] memory _amounts)
         public
     {
-        require(_tco2s.length > 0, "You need to have at least one TCO2.");
+        uint256 tco2sLen = _tco2s.length;
+        require(tco2sLen != 0, "Array empty");
 
-        require(
-            _tco2s.length == _amounts.length,
-            "You need an equal number of addresses and amounts"
-        );
+        require(tco2sLen == _amounts.length, "Arrays unequal");
 
         uint256 i = 0;
-        while (i < _tco2s.length) {
+        while (i < tco2sLen) {
             require(
                 balances[msg.sender][_tco2s[i]] >= _amounts[i],
-                "You don't have enough of this TCO2"
+                "Insufficient TCO2 balance"
             );
 
             balances[msg.sender][_tco2s[i]] -= _amounts[i];
