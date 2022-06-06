@@ -11,5 +11,5 @@ contract OffsetHelperStorage is OwnableUpgradeable {
     address public sushiRouterAddress =
         0x1b02dA8Cb0d097eB8D57A175b88c7D8b47997506;
     // user => (token => amount)
-    mapping(address => mapping(address => uint256)) public balances; // user => amount they've offset with this contract since it's been deployed
+    mapping(address => mapping(address => uint256)) public balances;
 }
