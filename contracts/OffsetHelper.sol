@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "./OffsetHelperStorage.sol";
 import "./interfaces/IToucanPoolToken.sol";
-import "./interfaces/IUniswapV2Router02.sol";
 import "./interfaces/IToucanCarbonOffsets.sol";
 import "./interfaces/IToucanContractRegistry.sol";
 import "hardhat/console.sol";
