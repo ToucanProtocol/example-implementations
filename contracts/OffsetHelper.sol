@@ -34,11 +34,12 @@ contract OffsetHelper is OffsetHelperStorage {
         uint256[] amounts
     );
 
-    // @description this is the autoOffset method for when the user wants to input tokens like USDC, WETH, WMATIC
-    // @param _depositedToken the address of the token that the user sends (could be USDC, WETH, WMATIC)
-    // @param _poolToken the pool that the user wants to use (could be NCT or BCT)
-    // @param _amountToOffset the amount of TCO2 to offset
-    // @returns 2 arrays, one containing the tco2s that were redeemed and another the amounts
+    /// @notice this is the autoOffset method for when the user wants to input tokens like USDC, WETH, WMATIC
+    /// @param _depositedToken the address of the token that the user sends (could be USDC, WETH, WMATIC)
+    /// @param _poolToken the pool that the user wants to use (could be NCT or BCT)
+    /// @param _amountToOffset the amount of TCO2 to offset
+    /// @return tco2s an array of the tco2 addresses that were redeemed
+    /// @return amounts an array of the amounts of each tco2s that were redeemed
     function autoOffsetUsingToken(
         address _depositedToken,
         address _poolToken,
@@ -54,9 +55,9 @@ contract OffsetHelper is OffsetHelperStorage {
         autoRetire(tco2s, amounts);
     }
 
-    // @description this is the autoOffset method for when the user wants to input MATIC
-    // @param _poolToken the pool that the user wants to use (could be NCT or BCT)
-    // @param _amountToOffset the amount of TCO2 to offset
+    /// @notice this is the autoOffset method for when the user wants to input MATIC
+    /// @param _poolToken the pool that the user wants to use (could be NCT or BCT)
+    /// @param _amountToOffset the amount of TCO2 to offset
     function autoOffsetUsingETH(address _poolToken, uint256 _amountToOffset)
         public
         payable
@@ -72,9 +73,9 @@ contract OffsetHelper is OffsetHelperStorage {
         autoRetire(tco2s, amounts);
     }
 
-    // @description this is the autoOffset method for when the user already has and wants to input BCT / NCT
-    // @param _poolToken the pool token that the user wants to use (could be NCT or BCT)
-    // @param _amountToOffset the amount of TCO2 to offset
+    /// @notice this is the autoOffset method for when the user already has and wants to input BCT / NCT
+    /// @param _poolToken the pool token that the user wants to use (could be NCT or BCT)
+    /// @param _amountToOffset the amount of TCO2 to offset
     function autoOffsetUsingPoolToken(
         address _poolToken,
         uint256 _amountToOffset
@@ -90,7 +91,7 @@ contract OffsetHelper is OffsetHelperStorage {
     }
 
     // checks address and returns if can be used at all by the contract
-    // @param _erc20Address address of token to be checked
+    /// @param _erc20Address address of token to be checked
     function isEligible(address _erc20Address) private view returns (bool) {
         bool isToucanContract = IToucanContractRegistry(contractRegistryAddress)
             .checkERC20(_erc20Address);
@@ -104,7 +105,7 @@ contract OffsetHelper is OffsetHelperStorage {
     }
 
     // checks address and returns if it can be used in a swap
-    // @param _erc20Address address of token to be checked
+    /// @param _erc20Address address of token to be checked
     function isSwapable(address _erc20Address) private view returns (bool) {
         if (_erc20Address == eligibleTokenAddresses["USDC"]) return true;
         if (_erc20Address == eligibleTokenAddresses["WETH"]) return true;
@@ -113,18 +114,18 @@ contract OffsetHelper is OffsetHelperStorage {
     }
 
     // checks address and returns if can it's a pool token and can be redeemed
-    // @param _erc20Address address of token to be checked
+    /// @param _erc20Address address of token to be checked
     function isRedeemable(address _erc20Address) private view returns (bool) {
         if (_erc20Address == eligibleTokenAddresses["BCT"]) return true;
         if (_erc20Address == eligibleTokenAddresses["NCT"]) return true;
         return false;
     }
 
-    // @description tells user how much of _fromToken is required to swap for an amount of pool tokens
-    // @param _fromToken the token the user wants to swap for pool token
-    // @param _toToken token to swap for (should be NCT or BCT)
-    // @param _amount amount of NCT / BCT wanted
-    // @returns uint256 representing the required ETH / MATIC to get the amount of NCT / BCT
+    /// @notice tells user how much of _fromToken is required to swap for an amount of pool tokens
+    /// @param _fromToken the token the user wants to swap for pool token
+    /// @param _toToken token to swap for (should be NCT or BCT)
+    /// @param _amount amount of NCT / BCT wanted
+    /// @return amountsIn the amount required ETH / MATIC to get the amount of NCT / BCT
     function calculateNeededTokenAmount(
         address _fromToken,
         address _toToken,
@@ -150,11 +151,11 @@ contract OffsetHelper is OffsetHelperStorage {
         return amountsIn[0];
     }
 
-    // @description uses SushiSwap to exchange eligible tokens for BCT / NCT
-    // @param _fromToken token to deposit and swap
-    // @param _toToken token to swap for (will be held within contract)
-    // @param _amount amount of NCT / BCT wanted
-    // @notice needs to be approved on the client side
+    /// @notice uses SushiSwap to exchange eligible tokens for BCT / NCT
+    /// @param _fromToken token to deposit and swap
+    /// @param _toToken token to swap for (will be held within contract)
+    /// @param _amount amount of NCT / BCT wanted
+    /// @notice needs to be approved on the client side
     function swap(
         address _fromToken,
         address _toToken,
@@ -210,10 +211,10 @@ contract OffsetHelper is OffsetHelperStorage {
 
     receive() external payable {}
 
-    // @description tells user how much ETH/MATIC is required to swap for an amount of pool tokens
-    // @param _toToken token to swap for (should be NCT or BCT)
-    // @param _amount amount of NCT / BCT wanted
-    // @returns uint256 representing the required ETH / MATIC to get the amount of NCT / BCT
+    /// @notice tells user how much ETH/MATIC is required to swap for an amount of pool tokens
+    /// @param _toToken token to swap for (should be NCT or BCT)
+    /// @param _amount amount of NCT / BCT wanted
+    /// @return amountsIn the amount required ETH / MATIC to get the amount of NCT / BCT
     function calculateNeededETHAmount(address _toToken, uint256 _amount)
         public
         view
@@ -236,10 +237,10 @@ contract OffsetHelper is OffsetHelperStorage {
         return amounts[0];
     }
 
-    // @description uses SushiSwap to exchange MATIC for BCT / NCT
-    // @param _toToken token to swap for (will be held within contract)
-    // @param _amount amount of NCT / BCT wanted
-    // @notice needs to be provided a message value on client side
+    /// @notice uses SushiSwap to exchange MATIC for BCT / NCT
+    /// @param _toToken token to swap for (will be held within contract)
+    /// @param _amount amount of NCT / BCT wanted
+    /// @notice needs to be provided a message value on client side
     function swap(address _toToken, uint256 _amount) public payable {
         // check tokens
         require(isRedeemable(_toToken), "Token not eligible");
@@ -281,7 +282,7 @@ contract OffsetHelper is OffsetHelperStorage {
         balances[msg.sender][path[2]] += _amount;
     }
 
-    // @description allow users to withdraw tokens they have deposited
+    /// @notice allow users to withdraw tokens they have deposited
     function withdraw(address _erc20Addr, uint256 _amount) public {
         require(
             balances[msg.sender][_erc20Addr] >= _amount,
@@ -292,8 +293,8 @@ contract OffsetHelper is OffsetHelperStorage {
         balances[msg.sender][_erc20Addr] -= _amount;
     }
 
-    // @description allow people to deposit BCT / NCT
-    // @notice needs to be approved
+    /// @notice allow people to deposit BCT / NCT
+    /// @notice needs to be approved
     function deposit(address _erc20Addr, uint256 _amount) public {
         require(isRedeemable(_erc20Addr), "Token not eligible");
 
@@ -301,11 +302,12 @@ contract OffsetHelper is OffsetHelperStorage {
         balances[msg.sender][_erc20Addr] += _amount;
     }
 
-    // @description redeems an amount of NCT / BCT for TCO2
-    // @param _fromToken could be the address of NCT or BCT
-    // @param _amount amount to redeem
-    // @notice needs to be approved on the client side
-    // @returns 2 arrays, one containing the tco2s that were redeemed and another the amounts
+    /// @notice redeems an amount of NCT / BCT for TCO2
+    /// @param _fromToken could be the address of NCT or BCT
+    /// @param _amount amount to redeem
+    /// @notice needs to be approved on the client side
+    /// @return tco2s an array of the tco2 addresses that were redeemed
+    /// @return amounts an array of the amounts of each tco2s that were redeemed
     function autoRedeem(address _fromToken, uint256 _amount)
         public
         returns (address[] memory tco2s, uint256[] memory amounts)
@@ -333,8 +335,8 @@ contract OffsetHelper is OffsetHelperStorage {
         emit Redeemed(msg.sender, _fromToken, tco2s, amounts);
     }
 
-    // @param _tco2s the addresses of the TCO2s to retire
-    // @param _amounts the amounts to retire from the matching TCO2
+    /// @param _tco2s the addresses of the TCO2s to retire
+    /// @param _amounts the amounts to retire from the matching TCO2
     function autoRetire(address[] memory _tco2s, uint256[] memory _amounts)
         public
     {
@@ -364,9 +366,9 @@ contract OffsetHelper is OffsetHelperStorage {
     //  Admin methods
     // ----------------------------------------
 
-    // @description you can use this to change or add eligible tokens and their addresses if needed
-    // @param _tokenSymbol symbol of the token to add
-    // @param _address the address of the token to add
+    /// @notice you can use this to change or add eligible tokens and their addresses if needed
+    /// @param _tokenSymbol symbol of the token to add
+    /// @param _address the address of the token to add
     function setEligibleTokenAddress(
         string memory _tokenSymbol,
         address _address
@@ -374,8 +376,8 @@ contract OffsetHelper is OffsetHelperStorage {
         eligibleTokenAddresses[_tokenSymbol] = _address;
     }
 
-    // @description you can use this to delete eligible tokens  if needed
-    // @param _tokenSymbol symbol of the token to add
+    /// @notice you can use this to delete eligible tokens  if needed
+    /// @param _tokenSymbol symbol of the token to add
     function deleteEligibleTokenAddress(string memory _tokenSymbol)
         public
         virtual
@@ -384,8 +386,8 @@ contract OffsetHelper is OffsetHelperStorage {
         delete eligibleTokenAddresses[_tokenSymbol];
     }
 
-    // @description you can use this to change the TCO2 contracts registry if needed
-    // @param _address the contract registry to use
+    /// @notice you can use this to change the TCO2 contracts registry if needed
+    /// @param _address the contract registry to use
     function setToucanContractRegistry(address _address)
         public
         virtual
