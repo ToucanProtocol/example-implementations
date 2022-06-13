@@ -1,6 +1,6 @@
 # Example Implementations
 
-A collection of examples that implement, integrate with or otherwise use Toucan's contracts and infrastructure. Some of these may be used in production.
+A collection of Solidity contract examples that implement, integrate with or demonstrate the use of Toucan's contracts and infrastructure. Some of these may be used in production.
 
 ## Contracts
 
@@ -10,46 +10,30 @@ A collection of examples that implement, integrate with or otherwise use Toucan'
 
 ## OffsetHelper
 
-The `OffsetHelper` abstracts the carbon offsetting process offered by Toucan to make it easier. Instead of you manually swapping your USDC for NCT, redeeming the NCT for TCO2, then retiring the TCO2... you can just use the `OffsetHelper` to swiftly do this process in 1-2 transactions.
+The `OffsetHelper` contract implements helper functions that simplify the carbon offsetting (retirement) process. Retiring carbon tokens normally requires multiple steps and interactions with Toucan Protocol's main contracts:
+1. Obtain a Toucan pool token such as BCT or NCT (by performing a token swap).
+2. Redeem the pool token for a TCO2 token.
+3. Retire the TCO2 token.
 
-This contract has 2 main methods that users would interact with: `autoOffset` and `autoOffsetUsingPoolToken`.
+These steps are combined in each of the following "auto offset" methods implemented in `OffsetHelper` to allow a retirement within one transaction:
+- `autoOffsetUsingPoolToken()` if the user has already owns a Toucan pool token such as BCT or NCT,
+- `autoOffsetUsingETH()` if the user would like to perform a retirement using MATIC,
+- `autoOffsetUsingToken()` if the user would like to perform a retirement using an ERC20 token: USDC, WETH or WMATIC.
 
-### `autoOffset(address _depositedToken, address _poolToken_, uint256 _amountToOffset)`
+In these methods, "auto" refers to the fact that these methods use `autoRedeem` in order to automatically choose a TCO2 token corresponding to the oldest tokenized carbon project in the specfified token pool. There are no fees incurred by the user when using `autoRedeem`.
 
-This method takes your tokens, swaps them for pool tokens (BCT or NCT), redeems that for the lowest quality TCO2 and then retires it.
+There are two read helper functions `calculateNeededETHAmount()` and `calculateNeededTokenAmount()` that can be used before calling `autoOffsetUsingETH()` and `autoOffsetUsingToken()`, to determine how MATIC, respectively how much of the ERC20 token must be sent to the `OffsetHelper` contract in order to retire the specified amount of carbon. 
 
-Let's discuss the params: the first is the token you will deposit to do the offset (could be USDC, WETH or WMATIC), the second is the pool token you want the contract to use (could be NCT or BCT) and the last is the amount of TCO2 to retire.
+See [./docs/OffsetHelper.md](./docs/OffsetHelper.md) for detailed documentation of these and other methods from the contract.
 
-You will have to approve the `OffsetHelper` from the token you wish to deposit before calling `autoOffset()` in this case.
+### Development
 
-### `autoOffset(address _poolToken_, uint256 _amountToOffset)`
+Install the requirements:
+```
+yarn install
+```
 
-If you call the `autoOffset()` method specifying only 2 params, it will be payable and you will need to specify a `msg.value`. It works the same as the above method, only this one will swap MATIC for pool tokens instead.
-
-The first param is the pool token you want the contract to use (could be NCT or BCT) and the second is the amount of TCO2 to retire.
-
-In case you send too much MATIC in the `msg.value`, the contract is programed to send leftover MATIC back to the user. But, I suggest you use the `calculateNeededETHAmount()` method of the contract before calling `autoOffset()` in this case.
-
-We'll discuss the `calculateNeededETHAmount()` method below.
-
-### `autoOffsetUsingPoolToken(address _poolToken, uint256 _amountToOffset)`
-
-This method is made for users that already have a pool token in their wallet (BCT or NCT), but still would like to use the `OffsetHelper` to abstract away a few steps.
-
-It takes your pool token, redeems it for the lowest quality TCO2 and retires it.
-
-The first parameter is the pool token you will deposit to do the offset (could be NCT or BCT), the second is the amount of TCO2 to retire.
-
-You will want to approve the `OffsetHelper` from the token you wish to deposit before calling `autoOffsetUsingPoolToken()` in this case.
-
-### `calculateNeededETHAmount(address _toToken, uint256 _amount)`
-
-This is a view method that allows you to see how much MATIC it would cost you to get a certain amount of BCT / NCT.
-
-Since (when automatically redeeming pool tokens for the lowest quality TCO2s) the redeeming has no fees and you get 1 TCO2 for each pool token you redeem, effectively this method will tell you how much MATIC you have to deposit to be able to retired a specific amount of TCO2.
-
-Normally, you'd use it before calling `autoOffset(address _poolToken_, uint256 _amountToOffset)` and the result it returns will be assigned as msg.value when you call `autoOffset(address _poolToken_, uint256 _amountToOffset)`.
-
-### Others
-
-There are other methods you can interact with, but you probably won't because it would result in a fairly manual, multi-step offsetting process which is what we're trying to abstract.
+Generate the documentation using
+```
+npx hardhat docgen
+```
