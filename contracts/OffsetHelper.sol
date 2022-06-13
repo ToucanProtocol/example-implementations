@@ -59,6 +59,16 @@ contract OffsetHelper is OffsetHelperStorage {
         }
     }
 
+    /**
+     * @notice Emitted upon successful redemption of TCO2 tokens from a Toucan
+     * pool token such as BCT or NCT.
+     *
+     * @param who The sender of the transaction
+     * @param poolToken The address of the Toucan pool token used in the
+     * redemption, for example, NCT or BCT
+     * @param tco2s An array of the TCO2 addresses that were redeemed
+     * @param amounts An array of the amounts of each TCO2 that were redeemed
+     */
     event Redeemed(
         address who,
         address poolToken,
@@ -91,7 +101,7 @@ contract OffsetHelper is OffsetHelperStorage {
      * @param _amountToOffset The amount of TCO2 to offset
      *
      * @return tco2s An array of the TCO2 addresses that were redeemed
-     * @return amounts An array of the amounts of each TCO2s that were redeemed
+     * @return amounts An array of the amounts of each TCO2 that were redeemed
      */
     function autoOffsetUsingToken(
         address _depositedToken,
@@ -127,7 +137,7 @@ contract OffsetHelper is OffsetHelperStorage {
      * @param _amountToOffset The amount of TCO2 to offset.
      *
      * @return tco2s An array of the TCO2 addresses that were redeemed
-     * @return amounts An array of the amounts of each TCO2s that were redeemed
+     * @return amounts An array of the amounts of each TCO2 that were redeemed
      */
     function autoOffsetUsingETH(address _poolToken, uint256 _amountToOffset)
         public
@@ -159,7 +169,7 @@ contract OffsetHelper is OffsetHelperStorage {
      * @param _amountToOffset The amount of TCO2 to offset.
      *
      * @return tco2s An array of the TCO2 addresses that were redeemed
-     * @return amounts An array of the amounts of each TCO2s that were redeemed
+     * @return amounts An array of the amounts of each TCO2 that were redeemed
      */
     function autoOffsetUsingPoolToken(
         address _poolToken,
@@ -175,8 +185,9 @@ contract OffsetHelper is OffsetHelperStorage {
         autoRetire(tco2s, amounts);
     }
 
-    // checks address and returns if can be used at all by the contract
-    /// @param _erc20Address address of token to be checked
+    /// @notice Checks whether an address can be used by the contract.
+    /// @param _erc20Address address of the ERC20 token to be checked
+    /// @return True if the address can be used by the contract
     function isEligible(address _erc20Address) private view returns (bool) {
         bool isToucanContract = IToucanContractRegistry(contractRegistryAddress)
             .checkERC20(_erc20Address);
@@ -189,8 +200,9 @@ contract OffsetHelper is OffsetHelperStorage {
         return false;
     }
 
-    // checks address and returns if it can be used in a swap
+    /// @notice Checks whether an address can be used in a token swap
     /// @param _erc20Address address of token to be checked
+    /// @return True if the specified address can be used in a swap
     function isSwapable(address _erc20Address) private view returns (bool) {
         if (_erc20Address == eligibleTokenAddresses["USDC"]) return true;
         if (_erc20Address == eligibleTokenAddresses["WETH"]) return true;
@@ -198,8 +210,9 @@ contract OffsetHelper is OffsetHelperStorage {
         return false;
     }
 
-    // checks address and returns if can it's a pool token and can be redeemed
+    /// @notice Checks whether an address is a Toucan pool token address
     /// @param _erc20Address address of token to be checked
+    /// @return True if the address is a Toucan pool token address
     function isRedeemable(address _erc20Address) private view returns (bool) {
         if (_erc20Address == eligibleTokenAddresses["BCT"]) return true;
         if (_erc20Address == eligibleTokenAddresses["NCT"]) return true;
@@ -400,12 +413,12 @@ contract OffsetHelper is OffsetHelperStorage {
         balances[msg.sender][_erc20Addr] += _amount;
     }
 
-    /// @notice redeems an amount of NCT / BCT for TCO2
+    /// @notice Redeems the specified amount of NCT / BCT for TCO2
     /// @param _fromToken could be the address of NCT or BCT
     /// @param _amount amount to redeem
     /// @notice needs to be approved on the client side
-    /// @return tco2s an array of the tco2 addresses that were redeemed
-    /// @return amounts an array of the amounts of each tco2s that were redeemed
+    /// @return tco2s an array of the TCO2 addresses that were redeemed
+    /// @return amounts an array of the amounts of each TCO2 that were redeemed
     function autoRedeem(address _fromToken, uint256 _amount)
         public
         returns (address[] memory tco2s, uint256[] memory amounts)
@@ -433,6 +446,7 @@ contract OffsetHelper is OffsetHelperStorage {
         emit Redeemed(msg.sender, _fromToken, tco2s, amounts);
     }
 
+    /// @notice Retire the specified TCO2 tokens.
     /// @param _tco2s the addresses of the TCO2s to retire
     /// @param _amounts the amounts to retire from the matching TCO2
     function autoRetire(address[] memory _tco2s, uint256[] memory _amounts)
