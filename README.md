@@ -21,7 +21,7 @@ Install the requirements:
 yarn install
 ```
 
-Generate the documentation using
+Generate documentation from the contract's [natspec](https://docs.soliditylang.org/en/latest/natspec-format.html) comments in [./docs/](./docs/) using
 ```
 npx hardhat docgen
 ```
