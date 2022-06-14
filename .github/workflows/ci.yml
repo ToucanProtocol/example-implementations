@@ -61,6 +61,9 @@ jobs:
         env:
           POLYGON_URL: ${{ secrets.POLYGON_URL }}
 
+      - name: Test solidity-docgen builds
+        run: yarn doc
+
       - name: Deploy contract
         run: yarn hardhat --network hardhat deployOffsetHelper --verify false
         env:

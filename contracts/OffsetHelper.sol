@@ -10,9 +10,54 @@ import "./interfaces/IToucanCarbonOffsets.sol";
 import "./interfaces/IToucanContractRegistry.sol";
 import "hardhat/console.sol";
 
+/**
+ * @title Toucan Protocol Offset Helpers
+ * @notice Helper functions that simplify the carbon offsetting (retirement)
+ * process.
+ *
+ * Retiring carbon tokens requires multiple steps and interactions with
+ * Toucan Protocol's main contracts:
+ * 1. Obtain a Toucan pool token such as BCT or NCT (by performing a token
+ *    swap).
+ * 2. Redeem the pool token for a TCO2 token.
+ * 3. Retire the TCO2 token.
+ *
+ * These steps are combined in each of the following "auto offset" methods
+ * implemented in `OffsetHelper` to allow a retirement within one transaction:
+ * - `autoOffsetUsingPoolToken()` if the user already owns a Toucan pool
+ *   token such as BCT or NCT,
+ * - `autoOffsetUsingETH()` if the user would like to perform a retirement
+ *   using MATIC,
+ * - `autoOffsetUsingToken()` if the user would like to perform a retirement
+ *   using an ERC20 token: USDC, WETH or WMATIC.
+ *
+ * In these methods, "auto" refers to the fact that these methods use
+ * `autoRedeem()` in order to automatically choose a TCO2 token corresponding
+ * to the oldest tokenized carbon project in the specfified token pool.
+ * There are no fees incurred by the user when using `autoRedeem()`, i.e., the
+ * user receives 1 TCO2 token for each pool token (BCT/NCT) redeemed.
+ *
+ * There are two `view` helper functions `calculateNeededETHAmount()` and
+ * `calculateNeededTokenAmount()` that should be called before using
+ * `autoOffsetUsingETH()` and `autoOffsetUsingToken()`, to determine how much
+ *  MATIC, respectively how much of the ERC20 token must be sent to the
+ * `OffsetHelper` contract in order to retire the specified amount of carbon.
+ */
 contract OffsetHelper is OffsetHelperStorage {
     using SafeERC20 for IERC20;
 
+    /**
+     * @notice Contract constructor. Should specify arrays of ERC20 symbols and
+     * addresses that can used by the contract.
+     *
+     * @dev See `isEligible()` for a list of tokens that can be used in the
+     * contract. These can be modified after deployment by the contract owner
+     * using `setEligibleTokenAddress()` and `deleteEligibleTokenAddress()`.
+     *
+     * @param _eligibleTokenSymbols A list of token symbols.
+     * @param _eligibleTokenAddresses A list of token addresses corresponding
+     * to the provided token symbols.
+     */
     constructor(
         string[] memory _eligibleTokenSymbols,
         address[] memory _eligibleTokenAddresses
@@ -27,6 +72,16 @@ contract OffsetHelper is OffsetHelperStorage {
         }
     }
 
+    /**
+     * @notice Emitted upon successful redemption of TCO2 tokens from a Toucan
+     * pool token such as BCT or NCT.
+     *
+     * @param who The sender of the transaction
+     * @param poolToken The address of the Toucan pool token used in the
+     * redemption, for example, NCT or BCT
+     * @param tco2s An array of the TCO2 addresses that were redeemed
+     * @param amounts An array of the amounts of each TCO2 that were redeemed
+     */
     event Redeemed(
         address who,
         address poolToken,
@@ -34,11 +89,33 @@ contract OffsetHelper is OffsetHelperStorage {
         uint256[] amounts
     );
 
-    // @description this is the autoOffset method for when the user wants to input tokens like USDC, WETH, WMATIC
-    // @param _depositedToken the address of the token that the user sends (could be USDC, WETH, WMATIC)
-    // @param _poolToken the pool that the user wants to use (could be NCT or BCT)
-    // @param _amountToOffset the amount of TCO2 to offset
-    // @returns 2 arrays, one containing the tco2s that were redeemed and another the amounts
+    /**
+     * @notice Retire carbon credits using the lowest quality (oldest) TCO2
+     * tokens available from the specified Toucan token pool by sending ERC20
+     * tokens (USDC, WETH, WMATIC). Use `calculateNeededTokenAmount` first in
+     * order to find out how much of the ERC20 token is required to retire the
+     * specified quantity of TCO2.
+     *
+     * This function:
+     * 1. Swaps the ERC20 token sent to the contract for the specified pool token.
+     * 2. Redeems the pool token for the poorest quality TCO2 tokens available.
+     * 3. Retires the TCO2 tokens.
+     *
+     * Note: The client must approve the ERC20 token that is sent to the contract.
+     *
+     * @dev When automatically redeeming pool tokens for the lowest quality
+     * TCO2s there are no fees and you receive exactly 1 TCO2 token for 1 pool
+     * token.
+     *
+     * @param _depositedToken The address of the ERC20 token that the user sends
+     * (must be one of USDC, WETH, WMATIC)
+     * @param _poolToken The address of the Toucan pool token that the
+     * user wants to use, for example, NCT or BCT
+     * @param _amountToOffset The amount of TCO2 to offset
+     *
+     * @return tco2s An array of the TCO2 addresses that were redeemed
+     * @return amounts An array of the amounts of each TCO2 that were redeemed
+     */
     function autoOffsetUsingToken(
         address _depositedToken,
         address _poolToken,
@@ -54,9 +131,27 @@ contract OffsetHelper is OffsetHelperStorage {
         autoRetire(tco2s, amounts);
     }
 
-    // @description this is the autoOffset method for when the user wants to input MATIC
-    // @param _poolToken the pool that the user wants to use (could be NCT or BCT)
-    // @param _amountToOffset the amount of TCO2 to offset
+    /**
+     * @notice Retire carbon credits using the lowest quality (oldest) TCO2
+     * tokens available from the specified Toucan token pool by sending MATIC.
+     * Use `calculateNeededETHAmount()` first in order to find out how much
+     * MATIC is required to retire the specified quantity of TCO2.
+     *
+     * This function:
+     * 1. Swaps the Matic sent to the contract for the specified pool token.
+     * 2. Redeems the pool token for the poorest quality TCO2 tokens available.
+     * 3. Retires the TCO2 tokens.
+     *
+     * @dev If the user sends much MATIC, the leftover amount will be sent back
+     * to the user.
+     *
+     * @param _poolToken The address of the Toucan pool token that the
+     * user wants to use, for example, NCT or BCT.
+     * @param _amountToOffset The amount of TCO2 to offset.
+     *
+     * @return tco2s An array of the TCO2 addresses that were redeemed
+     * @return amounts An array of the amounts of each TCO2 that were redeemed
+     */
     function autoOffsetUsingETH(address _poolToken, uint256 _amountToOffset)
         public
         payable
@@ -72,9 +167,23 @@ contract OffsetHelper is OffsetHelperStorage {
         autoRetire(tco2s, amounts);
     }
 
-    // @description this is the autoOffset method for when the user already has and wants to input BCT / NCT
-    // @param _poolToken the pool token that the user wants to use (could be NCT or BCT)
-    // @param _amountToOffset the amount of TCO2 to offset
+    /**
+     * @notice Retire carbon credits using the lowest quality (oldest) TCO2
+     * tokens available by sending Toucan pool tokens, for example, BCT or NCT.
+     *
+     * This function:
+     * 1. Redeems the pool token for the poorest quality TCO2 tokens available.
+     * 2. Retires the TCO2 tokens.
+     *
+     * Note: The client must approve the pool token that is sent.
+     *
+     * @param _poolToken The address of the Toucan pool token that the
+     * user wants to use, for example, NCT or BCT.
+     * @param _amountToOffset The amount of TCO2 to offset.
+     *
+     * @return tco2s An array of the TCO2 addresses that were redeemed
+     * @return amounts An array of the amounts of each TCO2 that were redeemed
+     */
     function autoOffsetUsingPoolToken(
         address _poolToken,
         uint256 _amountToOffset
@@ -89,8 +198,11 @@ contract OffsetHelper is OffsetHelperStorage {
         autoRetire(tco2s, amounts);
     }
 
-    // checks address and returns if can be used at all by the contract
-    // @param _erc20Address address of token to be checked
+    /**
+     * @notice Checks whether an address can be used by the contract.
+     * @param _erc20Address address of the ERC20 token to be checked
+     * @return True if the address can be used by the contract
+     */
     function isEligible(address _erc20Address) private view returns (bool) {
         bool isToucanContract = IToucanContractRegistry(contractRegistryAddress)
             .checkERC20(_erc20Address);
@@ -103,8 +215,11 @@ contract OffsetHelper is OffsetHelperStorage {
         return false;
     }
 
-    // checks address and returns if it can be used in a swap
-    // @param _erc20Address address of token to be checked
+    /**
+     * @notice Checks whether an address can be used in a token swap
+     * @param _erc20Address address of token to be checked
+     * @return True if the specified address can be used in a swap
+     */
     function isSwapable(address _erc20Address) private view returns (bool) {
         if (_erc20Address == eligibleTokenAddresses["USDC"]) return true;
         if (_erc20Address == eligibleTokenAddresses["WETH"]) return true;
@@ -112,19 +227,29 @@ contract OffsetHelper is OffsetHelperStorage {
         return false;
     }
 
-    // checks address and returns if can it's a pool token and can be redeemed
-    // @param _erc20Address address of token to be checked
+    /**
+     * @notice Checks whether an address is a Toucan pool token address
+     * @param _erc20Address address of token to be checked
+     * @return True if the address is a Toucan pool token address
+     */
     function isRedeemable(address _erc20Address) private view returns (bool) {
         if (_erc20Address == eligibleTokenAddresses["BCT"]) return true;
         if (_erc20Address == eligibleTokenAddresses["NCT"]) return true;
         return false;
     }
 
-    // @description tells user how much of _fromToken is required to swap for an amount of pool tokens
-    // @param _fromToken the token the user wants to swap for pool token
-    // @param _toToken token to swap for (should be NCT or BCT)
-    // @param _amount amount of NCT / BCT wanted
-    // @returns uint256 representing the required ETH / MATIC to get the amount of NCT / BCT
+    /**
+     * @notice Return how much of the specified ERC20 token is required in
+     * order to swap for the desired amount of a Toucan pool token, for
+     * example, BCT or NCT.
+     *
+     * @param _fromToken The address of the ERC20 token used for the swap
+     * @param _toToken The address of the pool token to swap for,
+     * for example, NCT or BCT
+     * @param _amount The desired amount of pool token to receive
+     * @return amountsIn The amount of the ERC20 token required in order to
+     * swap for the specified amount of the pool token
+     */
     function calculateNeededTokenAmount(
         address _fromToken,
         address _toToken,
@@ -150,11 +275,13 @@ contract OffsetHelper is OffsetHelperStorage {
         return amountsIn[0];
     }
 
-    // @description uses SushiSwap to exchange eligible tokens for BCT / NCT
-    // @param _fromToken token to deposit and swap
-    // @param _toToken token to swap for (will be held within contract)
-    // @param _amount amount of NCT / BCT wanted
-    // @notice needs to be approved on the client side
+    /**
+     * @notice Swap eligible ERC20 tokens for Toucan pool tokens (BCT/NCT) on SushiSwap
+     * @dev Needs to be approved on the client side
+     * @param _fromToken The ERC20 oken to deposit and swap
+     * @param _toToken The token to swap for (will be held within contract)
+     * @param _amount The required amount of the Toucan pool token (NCT/BCT)
+     */
     function swap(
         address _fromToken,
         address _toToken,
@@ -210,10 +337,16 @@ contract OffsetHelper is OffsetHelperStorage {
 
     receive() external payable {}
 
-    // @description tells user how much ETH/MATIC is required to swap for an amount of pool tokens
-    // @param _toToken token to swap for (should be NCT or BCT)
-    // @param _amount amount of NCT / BCT wanted
-    // @returns uint256 representing the required ETH / MATIC to get the amount of NCT / BCT
+    /**
+     * @notice Return how much MATIC is required in order to swap for the
+     * desired amount of a Toucan pool token, for example, BCT or NCT.
+     *
+     * @param _toToken The address of the pool token to swap for, for
+     * example, NCT or BCT
+     * @param _amount The desired amount of pool token to receive
+     * @return amounts The amount of MATIC required in order to swap for
+     * the specified amount of the pool token
+     */
     function calculateNeededETHAmount(address _toToken, uint256 _amount)
         public
         view
@@ -236,10 +369,11 @@ contract OffsetHelper is OffsetHelperStorage {
         return amounts[0];
     }
 
-    // @description uses SushiSwap to exchange MATIC for BCT / NCT
-    // @param _toToken token to swap for (will be held within contract)
-    // @param _amount amount of NCT / BCT wanted
-    // @notice needs to be provided a message value on client side
+    /**
+     * @notice Swap MATIC for Toucan pool tokens (BCT/NCT) on SushiSwap
+     * @param _toToken Token to swap for (will be held within contract)
+     * @param _amount Amount of NCT / BCT wanted
+     */
     function swap(address _toToken, uint256 _amount) public payable {
         // check tokens
         require(isRedeemable(_toToken), "Token not eligible");
@@ -281,7 +415,9 @@ contract OffsetHelper is OffsetHelperStorage {
         balances[msg.sender][path[2]] += _amount;
     }
 
-    // @description allow users to withdraw tokens they have deposited
+    /**
+     * @notice Allow users to withdraw tokens they have deposited.
+     */
     function withdraw(address _erc20Addr, uint256 _amount) public {
         require(
             balances[msg.sender][_erc20Addr] >= _amount,
@@ -292,8 +428,10 @@ contract OffsetHelper is OffsetHelperStorage {
         balances[msg.sender][_erc20Addr] -= _amount;
     }
 
-    // @description allow people to deposit BCT / NCT
-    // @notice needs to be approved
+    /**
+     * @notice Allow users to deposit BCT / NCT.
+     * @dev Needs to be approved
+     */
     function deposit(address _erc20Addr, uint256 _amount) public {
         require(isRedeemable(_erc20Addr), "Token not eligible");
 
@@ -301,11 +439,14 @@ contract OffsetHelper is OffsetHelperStorage {
         balances[msg.sender][_erc20Addr] += _amount;
     }
 
-    // @description redeems an amount of NCT / BCT for TCO2
-    // @param _fromToken could be the address of NCT or BCT
-    // @param _amount amount to redeem
-    // @notice needs to be approved on the client side
-    // @returns 2 arrays, one containing the tco2s that were redeemed and another the amounts
+    /**
+     * @notice Redeems the specified amount of NCT / BCT for TCO2.
+     * @dev Needs to be approved on the client side
+     * @param _fromToken Could be the address of NCT or BCT
+     * @param _amount Amount to redeem
+     * @return tco2s An array of the TCO2 addresses that were redeemed
+     * @return amounts An array of the amounts of each TCO2 that were redeemed
+     */
     function autoRedeem(address _fromToken, uint256 _amount)
         public
         returns (address[] memory tco2s, uint256[] memory amounts)
@@ -333,8 +474,12 @@ contract OffsetHelper is OffsetHelperStorage {
         emit Redeemed(msg.sender, _fromToken, tco2s, amounts);
     }
 
-    // @param _tco2s the addresses of the TCO2s to retire
-    // @param _amounts the amounts to retire from the matching TCO2
+    /**
+     * @notice Retire the specified TCO2 tokens.
+     * @param _tco2s The addresses of the TCO2s to retire
+     * @param _amounts The amounts to retire from each of the corresponding
+     * TCO2 addresses
+     */
     function autoRetire(address[] memory _tco2s, uint256[] memory _amounts)
         public
     {
@@ -364,9 +509,11 @@ contract OffsetHelper is OffsetHelperStorage {
     //  Admin methods
     // ----------------------------------------
 
-    // @description you can use this to change or add eligible tokens and their addresses if needed
-    // @param _tokenSymbol symbol of the token to add
-    // @param _address the address of the token to add
+    /**
+     * @notice Change or add eligible tokens and their addresses.
+     * @param _tokenSymbol The symbol of the token to add
+     * @param _address The address of the token to add
+     */
     function setEligibleTokenAddress(
         string memory _tokenSymbol,
         address _address
@@ -374,8 +521,10 @@ contract OffsetHelper is OffsetHelperStorage {
         eligibleTokenAddresses[_tokenSymbol] = _address;
     }
 
-    // @description you can use this to delete eligible tokens  if needed
-    // @param _tokenSymbol symbol of the token to add
+    /**
+     * @notice Delete eligible tokens stored in the contract.
+     * @param _tokenSymbol The symbol of the token to remove
+     */
     function deleteEligibleTokenAddress(string memory _tokenSymbol)
         public
         virtual
@@ -384,8 +533,10 @@ contract OffsetHelper is OffsetHelperStorage {
         delete eligibleTokenAddresses[_tokenSymbol];
     }
 
-    // @description you can use this to change the TCO2 contracts registry if needed
-    // @param _address the contract registry to use
+    /**
+     * @notice Change the TCO2 contracts registry.
+     * @param _address The address of the Toucan contract registry to use
+     */
     function setToucanContractRegistry(address _address)
         public
         virtual

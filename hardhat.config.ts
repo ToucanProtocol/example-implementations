@@ -6,10 +6,12 @@ import "@nomiclabs/hardhat-waffle";
 import "@typechain/hardhat";
 import "hardhat-gas-reporter";
 import "solidity-coverage";
+import "solidity-docgen";
 import { tokens } from "./utils/tokens";
 import addresses, { mumbaiAddresses } from "./utils/addresses";
 import { network } from "hardhat";
 import { boolean } from "hardhat/internal/core/params/argumentTypes";
+import { relative } from "path";
 
 dotenv.config();
 
@@ -102,6 +104,12 @@ const config: HardhatUserConfig = {
   },
   etherscan: {
     apiKey: process.env.POLYGONSCAN_API_KEY || "",
+  },
+  docgen: {
+    pages: (item: any, file: any) =>
+      file.absolutePath.startsWith("contracts/OffsetHelper")
+        ? relative("contracts", file.absolutePath).replace(".sol", ".md")
+        : undefined,
   },
 };
 
