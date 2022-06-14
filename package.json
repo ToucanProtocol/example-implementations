@@ -5,6 +5,7 @@
     "compile": "yarn hardhat compile",
     "console": "yarn hardhat console",
     "coverage": "yarn hardhat coverage --network hardhat",
+    "doc": "yarn hardhat docgen",
     "deploy": "yarn hardhat deploy",
     "test": "yarn hardhat test --network hardhat"
   },
