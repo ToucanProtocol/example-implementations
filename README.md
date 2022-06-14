@@ -1,6 +1,6 @@
 # Example Implementations
 
-A collection of Solidity contract examples that implement, integrate with or demonstrate the use of Toucan's contracts and infrastructure. Some of these may be used in production.
+A collection of Solidity contract examples that integrate with or demonstrate the use of Toucan's contracts and infrastructure. Some of these may be used in production.
 
 ## Contracts
 
@@ -16,12 +16,33 @@ See [./docs/OffsetHelper.md](./docs/OffsetHelper.md) for detailed documentation.
 
 ### Development
 
-Install the requirements:
+## Preqrequisites
+
+1. Install the required packages:
+   ```
+   yarn
+   ```
+2. Copy `.env.example` to `.env` and modify values of the required environment variables: 
+   1. `POLYGON_URL`/`MUMBAI_URL` to specify custom RPC endpoints for Polygon Mainnet, respectively, the Mumbai Testnet.  
+   2. `PRIVATE_KEY` and `POLYGONSCAN_KEY` in order to deploy contract and publish source code on [polygonscan](https://polygonscan.com).
+
+## Commands
+
+Use the following commands to compile, test and deploy the contracts:
 ```
-yarn install
+yarn compile
+yarn test      # test using a polygon fork
+yarn coverage  # test using a polygon fork with coverage report
+yarn deploy
 ```
 
-Generate documentation from the contract's [natspec](https://docs.soliditylang.org/en/latest/natspec-format.html) comments in [./docs/](./docs/) using
+Documentation can be auto-generated from the contract's [natspec](https://docs.soliditylang.org/en/latest/natspec-format.html) in [./docs/](./docs/) using
 ```
-npx hardhat docgen
+yarn doc
 ```
+
+Deploy the contract locally with:
+```
+yarn hardhat --network hardhat deployOffsetHelper --verify false
+```
+
