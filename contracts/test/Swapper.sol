@@ -2,7 +2,7 @@
 pragma solidity ^0.8.0;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
-import "../interfaces/IUniswapV2Router02.sol";
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 
 contract Swapper {
     using SafeERC20 for IERC20;
@@ -27,10 +27,10 @@ contract Swapper {
     {
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
-        address[] memory path = new address[](3);
-        path[0] = tokenAddresses["WMATIC"];
-        path[1] = tokenAddresses["USDC"];
-        path[2] = _toToken;
+        address[] memory path = generatePath(
+            tokenAddresses["WMATIC"],
+            _toToken
+        );
 
         uint256[] memory amounts = routerSushi.getAmountsIn(_amount, path);
         return amounts[0];
@@ -39,10 +39,10 @@ contract Swapper {
     function swap(address _toToken, uint256 _amount) public payable {
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
-        address[] memory path = new address[](3);
-        path[0] = tokenAddresses["WMATIC"];
-        path[1] = tokenAddresses["USDC"];
-        path[2] = _toToken;
+        address[] memory path = generatePath(
+            tokenAddresses["WMATIC"],
+            _toToken
+        );
 
         uint256[] memory amounts = routerSushi.swapETHForExactTokens{
             value: msg.value
@@ -57,6 +57,25 @@ contract Swapper {
             );
 
             require(success, "Failed to send surplus ETH back to user.");
+        }
+    }
+
+    function generatePath(address _fromToken, address _toToken)
+        internal
+        view
+        returns (address[] memory)
+    {
+        if (_toToken == tokenAddresses["USDC"]) {
+            address[] memory path = new address[](2);
+            path[0] = _fromToken;
+            path[1] = _toToken;
+            return path;
+        } else {
+            address[] memory path = new address[](3);
+            path[0] = _fromToken;
+            path[1] = tokenAddresses["USDC"];
+            path[2] = _toToken;
+            return path;
         }
     }
 

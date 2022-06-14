@@ -3,9 +3,9 @@ pragma solidity ^0.8.0;
 
 import "hardhat/console.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+import "@uniswap/v2-periphery/contracts/interfaces/IUniswapV2Router02.sol";
 import "./OffsetHelperStorage.sol";
 import "./interfaces/IToucanPoolToken.sol";
-import "./interfaces/IUniswapV2Router02.sol";
 import "./interfaces/IToucanCarbonOffsets.sol";
 import "./interfaces/IToucanContractRegistry.sol";
 import "hardhat/console.sol";
@@ -264,11 +264,8 @@ contract OffsetHelper is OffsetHelperStorage {
         // instantiate router
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
-        // establish path
-        address[] memory path = new address[](3);
-        path[0] = _fromToken;
-        path[1] = eligibleTokenAddresses["USDC"];
-        path[2] = _toToken;
+        // generate path
+        address[] memory path = generatePath(_fromToken, _toToken);
 
         // get expected amountsIn
         uint256[] memory amountsIn = routerSushi.getAmountsIn(_amount, path);
@@ -296,11 +293,8 @@ contract OffsetHelper is OffsetHelperStorage {
         // instantiate router
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
-        // establish path
-        address[] memory path = new address[](3);
-        path[0] = _fromToken;
-        path[1] = eligibleTokenAddresses["USDC"];
-        path[2] = _toToken;
+        // generate path
+        address[] memory path = generatePath(_fromToken, _toToken);
 
         // estimate amountsIn
         uint256[] memory expectedAmountsIn = routerSushi.getAmountsIn(
@@ -321,14 +315,14 @@ contract OffsetHelper is OffsetHelperStorage {
         // swap
         routerSushi.swapTokensForExactTokens(
             _amount,
-            expectedAmountsIn[2],
+            expectedAmountsIn[0],
             path,
             address(this),
             block.timestamp
         );
 
         // update balances
-        balances[msg.sender][path[2]] += _amount;
+        balances[msg.sender][_toToken] += _amount;
     }
 
     // apparently I need a fallback and a receive method to fix the situation where transfering dust MATIC
@@ -358,11 +352,11 @@ contract OffsetHelper is OffsetHelperStorage {
         // instantiate router
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
-        // establish path
-        address[] memory path = new address[](3);
-        path[0] = eligibleTokenAddresses["WMATIC"];
-        path[1] = eligibleTokenAddresses["USDC"];
-        path[2] = _toToken;
+        // generate path
+        address[] memory path = generatePath(
+            eligibleTokenAddresses["WMATIC"],
+            _toToken
+        );
 
         // get expectedAmountsIn
         uint256[] memory amounts = routerSushi.getAmountsIn(_amount, path);
@@ -381,11 +375,11 @@ contract OffsetHelper is OffsetHelperStorage {
         // instantiate router
         IUniswapV2Router02 routerSushi = IUniswapV2Router02(sushiRouterAddress);
 
-        // estabilish path
-        address[] memory path = new address[](3);
-        path[0] = eligibleTokenAddresses["WMATIC"];
-        path[1] = eligibleTokenAddresses["USDC"];
-        path[2] = _toToken;
+        // generate path
+        address[] memory path = generatePath(
+            eligibleTokenAddresses["WMATIC"],
+            _toToken
+        );
 
         // estimate amountsIn
         uint256[] memory expectedAmountsIn = routerSushi.getAmountsIn(
@@ -412,7 +406,7 @@ contract OffsetHelper is OffsetHelperStorage {
         }
 
         // update balances
-        balances[msg.sender][path[2]] += _amount;
+        balances[msg.sender][_toToken] += _amount;
     }
 
     /**
@@ -502,6 +496,25 @@ contract OffsetHelper is OffsetHelperStorage {
             unchecked {
                 ++i;
             }
+        }
+    }
+
+    function generatePath(address _fromToken, address _toToken)
+        internal
+        view
+        returns (address[] memory)
+    {
+        if (_fromToken == eligibleTokenAddresses["USDC"]) {
+            address[] memory path = new address[](2);
+            path[0] = _fromToken;
+            path[1] = _toToken;
+            return path;
+        } else {
+            address[] memory path = new address[](3);
+            path[0] = _fromToken;
+            path[1] = eligibleTokenAddresses["USDC"];
+            path[2] = _toToken;
+            return path;
         }
     }
 
