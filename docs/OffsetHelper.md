@@ -216,8 +216,9 @@ example, BCT or NCT.
 function swap(address _fromToken, address _toToken, uint256 _amount) public
 ```
 
-uses SushiSwap to exchange eligible tokens for BCT / NCT
-needs to be approved on the client side
+Swap eligible ERC20 tokens for Toucan pool tokens (BCT/NCT) on SushiSwap
+
+_Needs to be approved on the client side_
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -261,8 +262,7 @@ desired amount of a Toucan pool token, for example, BCT or NCT.
 function swap(address _toToken, uint256 _amount) public payable
 ```
 
-uses SushiSwap to exchange MATIC for BCT / NCT
-needs to be provided a message value on client side
+Swap MATIC for Toucan pool tokens (BCT/NCT) on SushiSwap
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
@@ -284,7 +284,8 @@ function deposit(address _erc20Addr, uint256 _amount) public
 ```
 
 allow people to deposit BCT / NCT
-needs to be approved
+
+_needs to be approved_
 
 ### autoRedeem
 
@@ -293,7 +294,8 @@ function autoRedeem(address _fromToken, uint256 _amount) public returns (address
 ```
 
 Redeems the specified amount of NCT / BCT for TCO2
-needs to be approved on the client side
+
+_needs to be approved on the client side_
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
