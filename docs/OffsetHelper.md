@@ -5,8 +5,8 @@
 Helper functions that simplify the carbon offsetting (retirement)
 process.
 
-Retiring carbon tokens normally requires multiple steps and interactions
-with Toucan Protocol's main contracts:
+Retiring carbon tokens requires multiple steps and interactions with
+Toucan Protocol's main contracts:
 1. Obtain a Toucan pool token such as BCT or NCT (by performing a token
    swap).
 2. Redeem the pool token for a TCO2 token.
@@ -14,7 +14,7 @@ with Toucan Protocol's main contracts:
 
 These steps are combined in each of the following "auto offset" methods
 implemented in `OffsetHelper` to allow a retirement within one transaction:
-- `autoOffsetUsingPoolToken()` if the user has already owns a Toucan pool
+- `autoOffsetUsingPoolToken()` if the user already owns a Toucan pool
   token such as BCT or NCT,
 - `autoOffsetUsingETH()` if the user would like to perform a retirement
   using MATIC,
@@ -22,21 +22,34 @@ implemented in `OffsetHelper` to allow a retirement within one transaction:
   using an ERC20 token: USDC, WETH or WMATIC.
 
 In these methods, "auto" refers to the fact that these methods use
-`autoRedeem` in order to automatically choose a TCO2 token corresponding
+`autoRedeem()` in order to automatically choose a TCO2 token corresponding
 to the oldest tokenized carbon project in the specfified token pool.
-There are no fees incurred by the user when using `autoRedeem`.
+There are no fees incurred by the user when using `autoRedeem()`, i.e., the
+user receives 1 TCO2 token for each pool token (BCT/NCT) redeemed.
 
-There are two read helper functions `calculateNeededETHAmount()` and
-`calculateNeededTokenAmount()` that can be used before calling
-`autoOffsetUsingETH()` and `autoOffsetUsingToken()`, to determine how MATIC,
-respectively how much of the ERC20 token must be sent to the `OffsetHelper`
-contract in order to retire the specified amount of carbon.
+There are two `view` helper functions `calculateNeededETHAmount()` and
+`calculateNeededTokenAmount()` that should be called before using
+`autoOffsetUsingETH()` and `autoOffsetUsingToken()`, to determine how much
+ MATIC, respectively how much of the ERC20 token must be sent to the
+`OffsetHelper` contract in order to retire the specified amount of carbon.
 
 ### constructor
 
 ```solidity
 constructor(string[] _eligibleTokenSymbols, address[] _eligibleTokenAddresses) public
 ```
+
+Contract constructor. Should specify arrays of ERC20 symbols and
+addresses that can used by the contract.
+
+_See `isEligible()` for a list of tokens that can be used in the
+contract. These can be modified after deployment by the contract owner
+using `setEligibleTokenAddress()` and `deleteEligibleTokenAddress()`._
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| _eligibleTokenSymbols | string[] | A list of token symbols. |
+| _eligibleTokenAddresses | address[] | A list of token addresses corresponding to the provided token symbols. |
 
 ### Redeemed
 
@@ -222,9 +235,9 @@ _Needs to be approved on the client side_
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _fromToken | address | token to deposit and swap |
-| _toToken | address | token to swap for (will be held within contract) |
-| _amount | uint256 | amount of NCT / BCT wanted |
+| _fromToken | address | The ERC20 oken to deposit and swap |
+| _toToken | address | The token to swap for (will be held within contract) |
+| _amount | uint256 | The required amount of the Toucan pool token (NCT/BCT) |
 
 ### fallback
 
@@ -266,8 +279,8 @@ Swap MATIC for Toucan pool tokens (BCT/NCT) on SushiSwap
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _toToken | address | token to swap for (will be held within contract) |
-| _amount | uint256 | amount of NCT / BCT wanted |
+| _toToken | address | Token to swap for (will be held within contract) |
+| _amount | uint256 | Amount of NCT / BCT wanted |
 
 ### withdraw
 
@@ -275,7 +288,7 @@ Swap MATIC for Toucan pool tokens (BCT/NCT) on SushiSwap
 function withdraw(address _erc20Addr, uint256 _amount) public
 ```
 
-allow users to withdraw tokens they have deposited
+Allow users to withdraw tokens they have deposited.
 
 ### deposit
 
@@ -283,9 +296,9 @@ allow users to withdraw tokens they have deposited
 function deposit(address _erc20Addr, uint256 _amount) public
 ```
 
-allow people to deposit BCT / NCT
+Allow users to deposit BCT / NCT.
 
-_needs to be approved_
+_Needs to be approved_
 
 ### autoRedeem
 
@@ -293,19 +306,19 @@ _needs to be approved_
 function autoRedeem(address _fromToken, uint256 _amount) public returns (address[] tco2s, uint256[] amounts)
 ```
 
-Redeems the specified amount of NCT / BCT for TCO2
+Redeems the specified amount of NCT / BCT for TCO2.
 
-_needs to be approved on the client side_
-
-| Name | Type | Description |
-| ---- | ---- | ----------- |
-| _fromToken | address | could be the address of NCT or BCT |
-| _amount | uint256 | amount to redeem |
+_Needs to be approved on the client side_
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| tco2s | address[] | an array of the TCO2 addresses that were redeemed |
-| amounts | uint256[] | an array of the amounts of each TCO2 that were redeemed |
+| _fromToken | address | Could be the address of NCT or BCT |
+| _amount | uint256 | Amount to redeem |
+
+| Name | Type | Description |
+| ---- | ---- | ----------- |
+| tco2s | address[] | An array of the TCO2 addresses that were redeemed |
+| amounts | uint256[] | An array of the amounts of each TCO2 that were redeemed |
 
 ### autoRetire
 
@@ -317,8 +330,8 @@ Retire the specified TCO2 tokens.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _tco2s | address[] | the addresses of the TCO2s to retire |
-| _amounts | uint256[] | the amounts to retire from the matching TCO2 |
+| _tco2s | address[] | The addresses of the TCO2s to retire |
+| _amounts | uint256[] | The amounts to retire from each of the corresponding TCO2 addresses |
 
 ### setEligibleTokenAddress
 
@@ -326,12 +339,12 @@ Retire the specified TCO2 tokens.
 function setEligibleTokenAddress(string _tokenSymbol, address _address) public virtual
 ```
 
-you can use this to change or add eligible tokens and their addresses if needed
+Change or add eligible tokens and their addresses.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _tokenSymbol | string | symbol of the token to add |
-| _address | address | the address of the token to add |
+| _tokenSymbol | string | The symbol of the token to add |
+| _address | address | The address of the token to add |
 
 ### deleteEligibleTokenAddress
 
@@ -339,11 +352,11 @@ you can use this to change or add eligible tokens and their addresses if needed
 function deleteEligibleTokenAddress(string _tokenSymbol) public virtual
 ```
 
-you can use this to delete eligible tokens  if needed
+Delete eligible tokens stored in the contract.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _tokenSymbol | string | symbol of the token to add |
+| _tokenSymbol | string | The symbol of the token to remove |
 
 ### setToucanContractRegistry
 
@@ -351,9 +364,9 @@ you can use this to delete eligible tokens  if needed
 function setToucanContractRegistry(address _address) public virtual
 ```
 
-you can use this to change the TCO2 contracts registry if needed
+Change the TCO2 contracts registry.
 
 | Name | Type | Description |
 | ---- | ---- | ----------- |
-| _address | address | the contract registry to use |
+| _address | address | The address of the Toucan contract registry to use |
 
