@@ -7,6 +7,7 @@ A collection of Solidity contract examples that integrate with or demonstrate th
 | Contract     | Polygon                                                                                                                  | Mumbai                                                                                                                          |
 | ------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
 | OffsetHelper | [0xFAFcCd01C395e4542BEed819De61f02f5562fAEa](https://polygonscan.com/address/0xFAFcCd01C395e4542BEed819De61f02f5562fAEa) | [0x30dC279166DCFB69F52C91d6A3380dCa75D0fCa7](https://mumbai.polygonscan.com/address/0x30dC279166DCFB69F52C91d6A3380dCa75D0fCa7) |
+| Swapper      | [0x1C7f2CCa1Cd52Aae8A25B7BA4b7800c153F48D70](https://polygonscan.com/address/0x1C7f2CCa1Cd52Aae8A25B7BA4b7800c153F48D70) | [0xDd052AcA9AC1492a8b4F1432B68f11989903dE4d](https://mumbai.polygonscan.com/address/0xDd052AcA9AC1492a8b4F1432B68f11989903dE4d) |
 
 ## OffsetHelper
 
