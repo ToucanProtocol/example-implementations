@@ -11,6 +11,7 @@ import {
 
 import * as hardhatContracts from "../utils/toucanContracts.json";
 import * as poolContract from "../artifacts/contracts/interfaces/IToucanPoolToken.sol/IToucanPoolToken.json";
+import * as carbonOffsetsContract from "../artifacts/contracts/interfaces/IToucanCarbonOffsets.sol/IToucanCarbonOffsets.json";
 import {
   IToucanPoolToken,
   OffsetHelper,
@@ -18,7 +19,7 @@ import {
   Swapper,
   Swapper__factory,
 } from "../typechain";
-import addresses from "../utils/addresses";
+import addresses, { whaleAddresses } from "../utils/addresses";
 import { Contract } from "ethers";
 import { usdcABI, wethABI, wmaticABI } from "../utils/ABIs";
 
@@ -85,13 +86,31 @@ describe("Offset Helper - autoOffset", function () {
       ]
     );
 
-    await Promise.all(
-      addrs.map(async (addr) => {
-        await addr.sendTransaction({
-          to: addr2.address,
-          value: (await addr.getBalance()).sub(parseEther("1.0")),
-        });
-      })
+    // Transfer a large amount of MATIC and NCT to the test account via account impersonation.
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [whaleAddresses.matic],
+    });
+    const maticWhale = ethers.provider.getSigner(whaleAddresses.matic);
+    await maticWhale.sendTransaction({
+      to: addr2.address,
+      value: (await maticWhale.getBalance()).sub(parseEther("1.0")),
+    });
+
+    // Note: The swapper fails when trying to exchange such a large amount of NCT.
+    await network.provider.request({
+      method: "hardhat_impersonateAccount",
+      params: [whaleAddresses.nct],
+    });
+    const addrNctWhale = ethers.provider.getSigner(whaleAddresses.nct);
+    const nctWhaleSigner = new ethers.Contract(
+      addresses.nct,
+      hardhatContracts.contracts.NatureCarbonTonne.abi,
+      addrNctWhale
+    );
+    await nctWhaleSigner.transfer(
+      addr2.address,
+      await nctWhaleSigner.balanceOf(whaleAddresses.nct)
     );
 
     await swapper.swap(addresses.weth, parseEther("20.0"), {
@@ -298,7 +317,7 @@ describe("Offset Helper - autoOffset", function () {
       ).to.be.revertedWith("Insufficient TCO2 balance");
     });
 
-    it("Should retire using an NCT deposit", async function () {
+    it("Should retire using a BCT deposit", async function () {
       await (await bct.approve(offsetHelper.address, parseEther("1.0"))).wait();
 
       await (
@@ -307,6 +326,54 @@ describe("Offset Helper - autoOffset", function () {
 
       const redeemReceipt = await (
         await offsetHelper.autoRedeem(addresses.bct, parseEther("1.0"))
+      ).wait();
+
+      if (!redeemReceipt.events) {
+        return;
+      }
+      const tco2s =
+        redeemReceipt.events[redeemReceipt.events.length - 1].args?.tco2s;
+      const amounts =
+        redeemReceipt.events[redeemReceipt.events.length - 1].args?.amounts;
+
+      await expect(offsetHelper.autoRetire(tco2s, amounts)).to.not.be.reverted;
+    });
+
+    it("Should retire using an NCT deposit, even if the first scored TCO2 is not in pool", async function () {
+      const scoredTCO2s = await nct.getScoredTCO2s();
+      const lowestScoredTCO2 = new ethers.Contract(
+        scoredTCO2s[0],
+        carbonOffsetsContract.abi,
+        addr2
+      );
+      const lowestScoredTCO2Balance = await lowestScoredTCO2.balanceOf(
+        addresses.nct
+      );
+
+      // Skip setup if the oldest tco2's balance in the pool is already 0.
+      if (formatEther(lowestScoredTCO2Balance) !== "0.0") {
+        // Setup: If the oldest tco2 balance is non-zero, remove all its tokens from the pool via a redeem.
+        // Ensure that addr2 has enough NCT to redeem all of the lowestScoredTCO2 or setup will fail.
+        expect(await nct.balanceOf(addr2.address)).to.be.above(
+          await lowestScoredTCO2.balanceOf(addresses.nct)
+        );
+
+        await nct.approve(offsetHelper.address, lowestScoredTCO2Balance);
+
+        await offsetHelper.deposit(addresses.nct, lowestScoredTCO2Balance);
+
+        await offsetHelper.autoRedeem(addresses.nct, lowestScoredTCO2Balance);
+      }
+
+      // Ensure the test condition is met.
+      expect(await lowestScoredTCO2.balanceOf(addresses.nct)).to.equal(0);
+
+      await nct.approve(offsetHelper.address, parseEther("1.0"));
+
+      await offsetHelper.deposit(addresses.nct, parseEther("0.0005"));
+
+      const redeemReceipt = await (
+        await offsetHelper.autoRedeem(addresses.nct, parseEther("0.0005"))
       ).wait();
 
       if (!redeemReceipt.events) {
