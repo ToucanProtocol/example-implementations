@@ -136,13 +136,11 @@ describe("Offset Helper - autoOffset", function () {
         )
       ).wait();
 
-      await expect(
-        offsetHelper.autoOffsetUsingToken(
-          addresses.weth,
-          addresses.nct,
-          parseEther("1.0")
-        )
-      ).to.not.be.reverted;
+      await offsetHelper.autoOffsetUsingToken(
+        addresses.weth,
+        addresses.nct,
+        parseEther("1.0")
+      );
     });
 
     it("Should retire using a MATIC swap and NCT redemption", async function () {
@@ -151,19 +149,18 @@ describe("Offset Helper - autoOffset", function () {
         parseEther("1.0")
       );
 
-      await expect(
-        offsetHelper.autoOffsetUsingETH(addresses.nct, parseEther("1.0"), {
-          value: maticToSend,
-        })
-      ).to.not.be.reverted;
+      await offsetHelper.autoOffsetUsingETH(addresses.nct, parseEther("1.0"), {
+        value: maticToSend,
+      });
     });
 
     it("Should retire using a NCT deposit and NCT redemption", async function () {
       await (await nct.approve(offsetHelper.address, parseEther("1.0"))).wait();
 
-      await expect(
-        offsetHelper.autoOffsetUsingPoolToken(addresses.nct, parseEther("1.0"))
-      ).to.not.be.reverted;
+      await offsetHelper.autoOffsetUsingPoolToken(
+        addresses.nct,
+        parseEther("1.0")
+      );
     });
 
     it("Should retire using a WETH swap and BCT redemption", async function () {
@@ -178,13 +175,11 @@ describe("Offset Helper - autoOffset", function () {
         )
       ).wait();
 
-      await expect(
-        offsetHelper.autoOffsetUsingToken(
-          addresses.weth,
-          addresses.bct,
-          parseEther("1.0")
-        )
-      ).to.not.be.reverted;
+      await offsetHelper.autoOffsetUsingToken(
+        addresses.weth,
+        addresses.bct,
+        parseEther("1.0")
+      );
     });
 
     it("Should retire using a USDC swap and NCT redemption", async function () {
@@ -199,13 +194,11 @@ describe("Offset Helper - autoOffset", function () {
         )
       ).wait();
 
-      await expect(
-        offsetHelper.autoOffsetUsingToken(
-          addresses.usdc,
-          addresses.nct,
-          parseEther("1.0")
-        )
-      ).to.not.be.reverted;
+      await offsetHelper.autoOffsetUsingToken(
+        addresses.usdc,
+        addresses.nct,
+        parseEther("1.0")
+      );
     });
 
     it("Should retire using a WMATIC swap and NCT redemption", async function () {
@@ -224,13 +217,11 @@ describe("Offset Helper - autoOffset", function () {
         )
       ).wait();
 
-      await expect(
-        offsetHelper.autoOffsetUsingToken(
-          addresses.wmatic,
-          addresses.nct,
-          parseEther("1.0")
-        )
-      ).to.not.be.reverted;
+      await offsetHelper.autoOffsetUsingToken(
+        addresses.wmatic,
+        addresses.nct,
+        parseEther("1.0")
+      );
     });
   });
 
@@ -242,8 +233,8 @@ describe("Offset Helper - autoOffset", function () {
         await offsetHelper.deposit(addresses.nct, parseEther("1.0"))
       ).wait();
 
-      await expect(offsetHelper.autoRedeem(addresses.nct, parseEther("1.0"))).to
-        .not.be.reverted;
+      await expect(offsetHelper.autoRedeem(addresses.nct, parseEther("1.0")))
+        .to;
     });
 
     it("Should fail because we haven't deposited NCT", async function () {
@@ -261,8 +252,7 @@ describe("Offset Helper - autoOffset", function () {
         await offsetHelper.deposit(addresses.bct, parseEther("1.0"))
       ).wait();
 
-      await expect(offsetHelper.autoRedeem(addresses.bct, parseEther("1.0"))).to
-        .not.be.reverted;
+      await offsetHelper.autoRedeem(addresses.bct, parseEther("1.0"));
     });
   });
 
@@ -286,7 +276,7 @@ describe("Offset Helper - autoOffset", function () {
       const amounts =
         redeemReceipt.events[redeemReceipt.events.length - 1].args?.amounts;
 
-      await expect(offsetHelper.autoRetire(tco2s, amounts)).to.not.be.reverted;
+      await offsetHelper.autoRetire(tco2s, amounts);
     });
 
     it("Should fail because we haven't redeemed any TCO2", async function () {
@@ -317,7 +307,7 @@ describe("Offset Helper - autoOffset", function () {
       const amounts =
         redeemReceipt.events[redeemReceipt.events.length - 1].args?.amounts;
 
-      await expect(offsetHelper.autoRetire(tco2s, amounts)).to.not.be.reverted;
+      await offsetHelper.autoRetire(tco2s, amounts);
     });
   });
 
