@@ -7,13 +7,22 @@ interface IfcAddresses {
   wmatic: string;
 }
 
-const addresses: IfcAddresses = {
+interface IfcWhaleAddresses {
+  matic: string;
+  nct: string;
+}
+export const addresses: IfcAddresses = {
   myAddress: "0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266",
   bct: "0x2F800Db0fdb5223b3C3f354886d907A671414A7F",
   nct: "0xD838290e877E0188a4A44700463419ED96c16107",
   usdc: "0x2791Bca1f2de4661ED88A30C99A7a9449Aa84174",
   weth: "0x7ceB23fD6bC0adD59E62ac25578270cFf1b9f619",
   wmatic: "0x0d500B1d8E8eF31E21C99d1Db9A6444d3ADf1270",
+};
+
+export const whaleAddresses: IfcWhaleAddresses = {
+  matic: "0xe7804c37c13166fF0b37F5aE0BB07A3aEbb6e245",
+  nct: "0x4b3ebae392e8b90a9b13068e90b27d9c41abc3c8",
 };
 
 export const mumbaiAddresses: IfcAddresses = {

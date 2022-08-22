@@ -488,11 +488,10 @@ contract OffsetHelper is OffsetHelperStorage {
                 balances[msg.sender][_tco2s[i]] >= _amounts[i],
                 "Insufficient TCO2 balance"
             );
-
-            balances[msg.sender][_tco2s[i]] -= _amounts[i];
-
-            IToucanCarbonOffsets(_tco2s[i]).retire(_amounts[i]);
-
+            if (_amounts[i] > 0) {
+                balances[msg.sender][_tco2s[i]] -= _amounts[i];
+                IToucanCarbonOffsets(_tco2s[i]).retire(_amounts[i]);
+            }
             unchecked {
                 ++i;
             }
