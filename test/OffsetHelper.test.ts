@@ -122,103 +122,209 @@ describe("Offset Helper - autoOffset", function () {
   });
 
   describe("Testing autoOffset()", function () {
-    it("Should retire using a WETH swap and NCT redemption", async function () {
-      await (
-        await weth.approve(
-          offsetHelper.address,
-          await offsetHelper.calculateNeededTokenAmount(
-            addresses.weth,
-            addresses.nct,
-            ONE_ETHER
-          )
-        )
-      ).wait();
+    it("should retire 1.0 TCO2 using a WETH swap and NCT redemption", async function () {
+      // first we set the initial chain state
+      const wethBalanceBefore = await weth.balanceOf(addr2.address);
+      const nctSupplyBefore = await nct.totalSupply();
 
-      await expect(
-        offsetHelper.autoOffsetUsingToken(
-          addresses.weth,
-          addresses.nct,
-          ONE_ETHER
-        )
-      ).to.not.be.reverted;
-    });
-
-    it("Should retire using a MATIC swap and NCT redemption", async function () {
-      const maticToSend = await offsetHelper.calculateNeededETHAmount(
+      // then we calculate the cost in WETH of retiring 1.0 TCO2
+      const wethCost = await offsetHelper.calculateNeededTokenAmount(
+        addresses.weth,
         addresses.nct,
         ONE_ETHER
       );
 
-      await offsetHelper.autoOffsetUsingETH(addresses.nct, ONE_ETHER, {
-        value: maticToSend,
-      });
+      // then we use the autoOffset function to retire 1.0 TCO2 from WETH using NCT
+      await (await weth.approve(offsetHelper.address, wethCost)).wait();
+      await offsetHelper.autoOffsetUsingToken(
+        addresses.weth,
+        addresses.nct,
+        ONE_ETHER
+      );
+
+      // then we set the chain state after the transaction
+      const wethBalanceAfter = await weth.balanceOf(addr2.address);
+      const nctSupplyAfter = await nct.totalSupply();
+
+      // and we compare chain states
+      expect(
+        formatEther(wethBalanceBefore.sub(wethBalanceAfter)),
+        `User should have spent ${formatEther(wethCost)}} WETH`
+      ).to.equal(formatEther(wethCost));
+      expect(
+        formatEther(nctSupplyBefore.sub(nctSupplyAfter)),
+        "Total supply of NCT should have decreased by 1"
+      ).to.equal("1.0");
     });
 
-    it("Should retire using a NCT deposit and NCT redemption", async function () {
-      await (await nct.approve(offsetHelper.address, ONE_ETHER)).wait();
+    it("should retire using a MATIC swap and NCT redemption", async function () {
+      // first we set the initial chain state
+      const maticBalanceBefore = await addr2.getBalance();
+      const nctSupplyBefore = await nct.totalSupply();
 
-      await offsetHelper.autoOffsetUsingPoolToken(addresses.nct, ONE_ETHER);
-    });
+      // then we calculate the cost in MATIC of retiring 1.0 TCO2
+      const maticCost = await offsetHelper.calculateNeededETHAmount(
+        addresses.nct,
+        ONE_ETHER
+      );
 
-    it("Should retire using a WETH swap and BCT redemption", async function () {
-      await (
-        await weth.approve(
-          offsetHelper.address,
-          await offsetHelper.calculateNeededTokenAmount(
-            addresses.weth,
-            addresses.bct,
-            ONE_ETHER
-          )
-        )
+      // then we use the autoOffset function to retire 1.0 TCO2 from MATIC using NCT
+      const tx = await (
+        await offsetHelper.autoOffsetUsingETH(addresses.nct, ONE_ETHER, {
+          value: maticCost,
+        })
       ).wait();
 
+      // we calculate the used gas
+      const txFees = tx.gasUsed.mul(tx.effectiveGasPrice);
+
+      // and we set the chain state after the transaction
+      const maticBalanceAfter = await addr2.getBalance();
+      const nctSupplyAfter = await nct.totalSupply();
+
+      // lastly we compare chain states
+      expect(
+        formatEther(maticBalanceBefore.sub(maticBalanceAfter)),
+        `User should have spent ${formatEther(maticCost)}} MATIC`
+      ).to.equal(formatEther(maticCost.add(txFees)));
+      expect(
+        formatEther(nctSupplyBefore.sub(nctSupplyAfter)),
+        "Total supply of NCT should have decreased by 1"
+      ).to.equal("1.0");
+    });
+
+    it("should retire using a NCT deposit and NCT redemption", async function () {
+      // first we set the initial chain state
+      const nctBalanceBefore = await nct.balanceOf(addr2.address);
+      const nctSupplyBefore = await nct.totalSupply();
+
+      // then we use the autoOffset function to retire 1.0 TCO2 from NCT
+      await (await nct.approve(offsetHelper.address, ONE_ETHER)).wait();
+      await offsetHelper.autoOffsetUsingPoolToken(addresses.nct, ONE_ETHER);
+
+      // then we set the chain state after the transaction
+      const nctBalanceAfter = await nct.balanceOf(addr2.address);
+      const nctSupplyAfter = await nct.totalSupply();
+
+      // and we compare chain states
+      expect(
+        formatEther(nctBalanceBefore.sub(nctBalanceAfter)),
+        `User should have spent 1.0 NCT`
+      ).to.equal("1.0");
+      expect(
+        formatEther(nctSupplyBefore.sub(nctSupplyAfter)),
+        "Total supply of NCT should have decreased by 1"
+      ).to.equal("1.0");
+    });
+
+    it("should retire using a WETH swap and BCT redemption", async function () {
+      // first we set the initial chain state
+      const wethBalanceBefore = await weth.balanceOf(addr2.address);
+      const bctSupplyBefore = await bct.totalSupply();
+
+      // then we calculate the cost in WETH of retiring 1.0 TCO2
+      const wethCost = await offsetHelper.calculateNeededTokenAmount(
+        addresses.weth,
+        addresses.bct,
+        ONE_ETHER
+      );
+
+      // then we use the autoOffset function to retire 1.0 TCO2 from WETH using BCT
+      await (await weth.approve(offsetHelper.address, wethCost)).wait();
       await offsetHelper.autoOffsetUsingToken(
         addresses.weth,
         addresses.bct,
         ONE_ETHER
       );
+
+      // then we set the chain state after the transaction
+      const wethBalanceAfter = await weth.balanceOf(addr2.address);
+      const bctSupplyAfter = await bct.totalSupply();
+
+      // and we compare chain states
+      expect(
+        formatEther(wethBalanceBefore.sub(wethBalanceAfter)),
+        `User should have spent ${formatEther(wethCost)}} WETH`
+      ).to.equal(formatEther(wethCost));
+      expect(
+        formatEther(bctSupplyBefore.sub(bctSupplyAfter)),
+        "Total supply of BCT should have decreased by 1"
+      ).to.equal("1.0");
     });
 
-    it("Should retire using a USDC swap and NCT redemption", async function () {
-      await (
-        await usdc.approve(
-          offsetHelper.address,
-          await offsetHelper.calculateNeededTokenAmount(
-            addresses.usdc,
-            addresses.nct,
-            ONE_ETHER
-          )
-        )
-      ).wait();
+    it("should retire using a USDC swap and NCT redemption", async function () {
+      // first we set the initial chain state
+      const usdcBalanceBefore = await usdc.balanceOf(addr2.address);
+      const nctSupplyBefore = await nct.totalSupply();
 
+      // then we calculate the cost in USDC of retiring 1.0 TCO2
+      const usdcCost = await offsetHelper.calculateNeededTokenAmount(
+        addresses.usdc,
+        addresses.nct,
+        ONE_ETHER
+      );
+
+      // then we use the autoOffset function to retire 1.0 TCO2 from USDC using NCT
+      await (await usdc.approve(offsetHelper.address, usdcCost)).wait();
       await offsetHelper.autoOffsetUsingToken(
         addresses.usdc,
         addresses.nct,
         ONE_ETHER
       );
+
+      // then we set the chain state after the transaction
+      const usdcBalanceAfter = await usdc.balanceOf(addr2.address);
+      const nctSupplyAfter = await nct.totalSupply();
+
+      // and we compare chain states
+      expect(
+        formatEther(usdcBalanceBefore.sub(usdcBalanceAfter)),
+        `User should have spent ${formatEther(usdcCost)}} USDC`
+      ).to.equal(formatEther(usdcCost));
+      expect(
+        formatEther(nctSupplyBefore.sub(nctSupplyAfter)),
+        "Total supply of NCT should have decreased by 1"
+      ).to.equal("1.0");
     });
 
-    it("Should retire using a WMATIC swap and NCT redemption", async function () {
+    it("should retire using a WMATIC swap and NCT redemption", async function () {
+      // first we wrap some matic
       await wmatic.deposit({
         value: parseEther("20.0"),
       });
 
-      await (
-        await wmatic.approve(
-          offsetHelper.address,
-          await offsetHelper.calculateNeededTokenAmount(
-            addresses.wmatic,
-            addresses.nct,
-            ONE_ETHER
-          )
-        )
-      ).wait();
+      // then we set the initial chain state
+      const wmaticBalanceBefore = await wmatic.balanceOf(addr2.address);
+      const nctSupplyBefore = await nct.totalSupply();
 
+      // and we calculate the cost in WMATIC of retiring 1.0 TCO2
+      const wmaticCost = await offsetHelper.calculateNeededTokenAmount(
+        addresses.wmatic,
+        addresses.nct,
+        ONE_ETHER
+      );
+
+      // we use the autoOffset function to retire 1.0 TCO2 from WMATIC using NCT
+      await (await wmatic.approve(offsetHelper.address, wmaticCost)).wait();
       await offsetHelper.autoOffsetUsingToken(
         addresses.wmatic,
         addresses.nct,
         ONE_ETHER
       );
+
+      // then we set the chain state after the transaction
+      const wmaticBalanceAfter = await wmatic.balanceOf(addr2.address);
+      const nctSupplyAfter = await nct.totalSupply();
+
+      // and we compare chain states
+      expect(
+        formatEther(wmaticBalanceBefore.sub(wmaticBalanceAfter)),
+        `User should have spent ${formatEther(wmaticCost)} WMATIC`
+      ).to.equal(formatEther(wmaticCost));
+      expect(
+        formatEther(nctSupplyBefore.sub(nctSupplyAfter)),
+        "Total supply of NCT should have decreased by 1"
+      ).to.equal("1.0");
     });
   });
 
