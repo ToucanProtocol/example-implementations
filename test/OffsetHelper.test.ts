@@ -471,24 +471,98 @@ describe("Offset Helper - autoOffset", function () {
   });
 
   describe("Testing autoRetire()", function () {
-    it("Should retire using an NCT deposit", async function () {
-      await (await nct.approve(offsetHelper.address, ONE_ETHER)).wait();
+    it("should retire using an NCT deposit", async function () {
+      // first we set the initial state
+      const state: {
+        userNctBalance: BigNumber;
+        contractNctBalance: BigNumber;
+        nctSupply: BigNumber;
+      }[] = [];
+      state.push({
+        userNctBalance: await nct.balanceOf(addr2.address),
+        contractNctBalance: await nct.balanceOf(offsetHelper.address),
+        nctSupply: await nct.totalSupply(),
+      });
 
+      // we deposit NCT into OH
+      await (await nct.approve(offsetHelper.address, ONE_ETHER)).wait();
       await (await offsetHelper.deposit(addresses.nct, ONE_ETHER)).wait();
 
+      // and we check the state after the deposit
+      state.push({
+        userNctBalance: await nct.balanceOf(addr2.address),
+        contractNctBalance: await nct.balanceOf(offsetHelper.address),
+        nctSupply: await nct.totalSupply(),
+      });
+      expect(
+        formatEther(state[0].userNctBalance.sub(state[1].userNctBalance)),
+        "User should have 1 less NCT post deposit"
+      ).to.equal(formatEther(ONE_ETHER));
+      expect(
+        formatEther(
+          state[1].contractNctBalance.sub(state[0].contractNctBalance)
+        ),
+        "Contract should have 1 more NCT post deposit"
+      ).to.equal(formatEther(ONE_ETHER));
+      expect(
+        formatEther(state[0].nctSupply),
+        "NCT supply should be the same post deposit"
+      ).to.equal(formatEther(state[1].nctSupply));
+
+      // we redeem NCT for TCO2 within OH
       const redeemReceipt = await (
         await offsetHelper.autoRedeem(addresses.nct, ONE_ETHER)
       ).wait();
 
-      if (!redeemReceipt.events) {
-        return;
-      }
+      // and we check the state after the redeem
+      state.push({
+        userNctBalance: await nct.balanceOf(addr2.address),
+        contractNctBalance: await nct.balanceOf(offsetHelper.address),
+        nctSupply: await nct.totalSupply(),
+      });
+      expect(
+        formatEther(state[1].userNctBalance),
+        "User should have the same amount of NCT post redeem"
+      ).to.equal(formatEther(state[2].userNctBalance));
+      expect(
+        formatEther(
+          state[1].contractNctBalance.sub(state[2].contractNctBalance)
+        ),
+        "Contract should have 1 less NCT post redeem"
+      ).to.equal(formatEther(ONE_ETHER));
+      expect(
+        formatEther(state[1].nctSupply.sub(state[2].nctSupply)),
+        "NCT supply should be less by 1 post redeem"
+      ).to.equal(formatEther(ONE_ETHER));
+
+      // we get the tco2s and amounts that were redeemed
+      if (!redeemReceipt.events) throw new Error("No events emitted");
       const tco2s =
         redeemReceipt.events[redeemReceipt.events.length - 1].args?.tco2s;
       const amounts =
         redeemReceipt.events[redeemReceipt.events.length - 1].args?.amounts;
 
+      // we retire the tco2s
       await offsetHelper.autoRetire(tco2s, amounts);
+
+      // and we check the state after the retire
+      state.push({
+        userNctBalance: await nct.balanceOf(addr2.address),
+        contractNctBalance: await nct.balanceOf(offsetHelper.address),
+        nctSupply: await nct.totalSupply(),
+      });
+      expect(
+        formatEther(state[2].userNctBalance),
+        "User should have the same amount of NCT post retire"
+      ).to.equal(formatEther(state[3].userNctBalance));
+      expect(
+        formatEther(state[2].contractNctBalance),
+        "Contract should have the same amount of NCT post retire"
+      ).to.equal(formatEther(state[3].contractNctBalance));
+      expect(
+        formatEther(state[2].nctSupply),
+        "NCT supply should be the same post retire"
+      ).to.equal(formatEther(state[3].nctSupply));
     });
 
     it("Should fail because we haven't redeemed any TCO2", async function () {
@@ -500,24 +574,98 @@ describe("Offset Helper - autoOffset", function () {
       ).to.be.revertedWith("Insufficient TCO2 balance");
     });
 
-    it("Should retire using an NCT deposit", async function () {
-      await (await bct.approve(offsetHelper.address, ONE_ETHER)).wait();
+    it("should retire using an BCT deposit", async function () {
+      // first we set the initial state
+      const state: {
+        userBctBalance: BigNumber;
+        contractBctBalance: BigNumber;
+        bctSupply: BigNumber;
+      }[] = [];
+      state.push({
+        userBctBalance: await bct.balanceOf(addr2.address),
+        contractBctBalance: await bct.balanceOf(offsetHelper.address),
+        bctSupply: await bct.totalSupply(),
+      });
 
+      // we deposit BCT into OH
+      await (await bct.approve(offsetHelper.address, ONE_ETHER)).wait();
       await (await offsetHelper.deposit(addresses.bct, ONE_ETHER)).wait();
 
+      // and we check the state after the deposit
+      state.push({
+        userBctBalance: await bct.balanceOf(addr2.address),
+        contractBctBalance: await bct.balanceOf(offsetHelper.address),
+        bctSupply: await bct.totalSupply(),
+      });
+      expect(
+        formatEther(state[0].userBctBalance.sub(state[1].userBctBalance)),
+        "User should have 1 less BCT post deposit"
+      ).to.equal(formatEther(ONE_ETHER));
+      expect(
+        formatEther(
+          state[1].contractBctBalance.sub(state[0].contractBctBalance)
+        ),
+        "Contract should have 1 more BCT post deposit"
+      ).to.equal(formatEther(ONE_ETHER));
+      expect(
+        formatEther(state[0].bctSupply),
+        "BCT supply should be the same post deposit"
+      ).to.equal(formatEther(state[1].bctSupply));
+
+      // we redeem BCT for TCO2 within OH
       const redeemReceipt = await (
         await offsetHelper.autoRedeem(addresses.bct, ONE_ETHER)
       ).wait();
 
-      if (!redeemReceipt.events) {
-        return;
-      }
+      // and we check the state after the redeem
+      state.push({
+        userBctBalance: await bct.balanceOf(addr2.address),
+        contractBctBalance: await bct.balanceOf(offsetHelper.address),
+        bctSupply: await bct.totalSupply(),
+      });
+      expect(
+        formatEther(state[1].userBctBalance),
+        "User should have the same amount of BCT post redeem"
+      ).to.equal(formatEther(state[2].userBctBalance));
+      expect(
+        formatEther(
+          state[1].contractBctBalance.sub(state[2].contractBctBalance)
+        ),
+        "Contract should have 1 less BCT post redeem"
+      ).to.equal(formatEther(ONE_ETHER));
+      expect(
+        formatEther(state[1].bctSupply.sub(state[2].bctSupply)),
+        "BCT supply should be less by 1 post redeem"
+      ).to.equal(formatEther(ONE_ETHER));
+
+      // we get the tco2s and amounts that were redeemed
+      if (!redeemReceipt.events) throw new Error("No events emitted");
       const tco2s =
         redeemReceipt.events[redeemReceipt.events.length - 1].args?.tco2s;
       const amounts =
         redeemReceipt.events[redeemReceipt.events.length - 1].args?.amounts;
 
+      // we retire the tco2s
       await offsetHelper.autoRetire(tco2s, amounts);
+
+      // and we check the state after the retire
+      state.push({
+        userBctBalance: await bct.balanceOf(addr2.address),
+        contractBctBalance: await bct.balanceOf(offsetHelper.address),
+        bctSupply: await bct.totalSupply(),
+      });
+      expect(
+        formatEther(state[2].userBctBalance),
+        "User should have the same amount of BCT post retire"
+      ).to.equal(formatEther(state[3].userBctBalance));
+      expect(
+        formatEther(state[2].contractBctBalance),
+        "Contract should have the same amount of BCT post retire"
+      ).to.equal(formatEther(state[3].contractBctBalance));
+      expect(
+        formatEther(state[2].bctSupply),
+        "BCT supply should be the same post retire"
+      ).to.equal(formatEther(state[3].bctSupply));
     });
   });
 
