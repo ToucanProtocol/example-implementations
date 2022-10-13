@@ -1,19 +1,10 @@
 # Example Implementations
 
-A collection of Solidity contract examples that integrate with or demonstrate the use of Toucan's contracts and infrastructure. Some of these may be used in production.
-
-## Contracts
-
-| Contract     | Polygon                                                                                                                  | Mumbai                                                                                                                          |
-| ------------ | ------------------------------------------------------------------------------------------------------------------------ | ------------------------------------------------------------------------------------------------------------------------------- |
-| OffsetHelper | [0xFAFcCd01C395e4542BEed819De61f02f5562fAEa](https://polygonscan.com/address/0xFAFcCd01C395e4542BEed819De61f02f5562fAEa) | [0x30dC279166DCFB69F52C91d6A3380dCa75D0fCa7](https://mumbai.polygonscan.com/address/0x30dC279166DCFB69F52C91d6A3380dCa75D0fCa7) |
-| Swapper      | [0x1C7f2CCa1Cd52Aae8A25B7BA4b7800c153F48D70](https://polygonscan.com/address/0x1C7f2CCa1Cd52Aae8A25B7BA4b7800c153F48D70) | [0xDd052AcA9AC1492a8b4F1432B68f11989903dE4d](https://mumbai.polygonscan.com/address/0xDd052AcA9AC1492a8b4F1432B68f11989903dE4d) |
+A hardhat repo that is a collection of Solidity contract **examples** that integrate with or demonstrate the use of Toucan's contracts and infrastructure. Some of these may be used in production and we'll provide links to their prod repos below.
 
 ## OffsetHelper
 
-The `OffsetHelper` contract implements helper functions that simplify the carbon offsetting (retirement) process.
-
-See [./docs/OffsetHelper.md](./docs/OffsetHelper.md) for detailed documentation.
+The `OffsetHelper` contract implements helper functions that simplify the carbon offsetting (retirement) process. It's production version (with actualized related documentation) which is actively maintained can be found [here](https://github.com/ToucanProtocol/OffsetHelper). You can still use the version found in this repo as an example for inspiration purposes.
 
 ### Development
 
